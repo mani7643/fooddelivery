@@ -82,6 +82,49 @@ class NotificationService {
         }
     }
 
+    async sendOtpEmail(to, otp) {
+        const subject = 'Verify Your Email - OTP Code';
+        const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #333; text-align: center;">Email Verification</h2>
+                <p>Your OTP code for email verification is:</p>
+                <div style="background: #f0f0f0; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
+                    <h1 style="color: #4F46E5; font-size: 36px; margin: 0; letter-spacing: 8px;">${otp}</h1>
+                </div>
+                <p style="color: #666;">This code will expire in <strong>5 minutes</strong>.</p>
+                <p style="color: #666;">If you didn't request this code, please ignore this email.</p>
+                <br/>
+                <p style="color: #999; font-size: 12px;">This is an automated email, please do not reply.</p>
+            </div>
+        `;
+
+        if (this.transporter) {
+            try {
+                const info = await this.transporter.sendMail({
+                    from: '"Courier Platform" <no-reply@courier.com>',
+                    to,
+                    subject,
+                    html
+                });
+
+                console.log(`✅ OTP email sent to ${to}`);
+
+                // If using Ethereal, log the preview URL
+                const previewUrl = nodemailer.getTestMessageUrl(info);
+                if (previewUrl) {
+                    console.log('📬 ---------------------------------------------------');
+                    console.log(`📬 View OTP Email: ${previewUrl}`);
+                    console.log('📬 ---------------------------------------------------');
+                }
+            } catch (error) {
+                console.error('❌ Error sending OTP email:', error.message);
+                this.logEmailToConsole(to, subject, `OTP: ${otp}`);
+            }
+        } else {
+            this.logEmailToConsole(to, subject, `OTP: ${otp}`);
+        }
+    }
+
     async sendWelcomeSMS(phone, name) {
         // In a real app, integrate with Twilio/SNS here
         const message = `Welcome ${name}! Thanks for joining our delivery network. Download the app to start earning.`;

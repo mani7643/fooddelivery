@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import User from '../models/User.js';
 import Driver from '../models/Driver.js';
 import PhoneVerification from '../models/PhoneVerification.js';
+import EmailVerification from '../models/EmailVerification.js';
 import notificationService from '../services/notificationService.js';
 
 const router = express.Router();
@@ -15,9 +16,73 @@ const generateToken = (id) => {
     });
 };
 
+// @route   POST /api/auth/send-email-otp
+// @desc    Send OTP to email for verification
+// @access  Public
+router.post('/send-email-otp', async (req, res) => {
+    try {
+        console.log('📧 [EMAIL-OTP] Received send-email-otp request');
+        const { email } = req.body;
+
+        if (!email) {
+            console.log('❌ [EMAIL-OTP] No email provided');
+            return res.status(400).json({ message: 'Email is required' });
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            console.log('❌ [EMAIL-OTP] Invalid email format');
+            return res.status(400).json({ message: 'Invalid email format' });
+        }
+
+        console.log(`📧 [EMAIL-OTP] Processing for email: ${email}`);
+
+        // Check if email already registered
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            console.log(`⚠️ [EMAIL-OTP] Email ${email} already registered`);
+            return res.status(400).json({ message: 'Email already registered' });
+        }
+
+        // Generate 6 digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        console.log(`🔢 [EMAIL-OTP] Generated OTP for ${email}: ${otp}`);
+
+        // Save OTP to DB (upsert)
+        console.log(`💾 [EMAIL-OTP] Saving to database...`);
+        const verification = await EmailVerification.findOneAndUpdate(
+            { email },
+            { email, otp, createdAt: Date.now() },
+            { upsert: true, new: true }
+        );
+        console.log(`✅ [EMAIL-OTP] Saved to database with ID: ${verification._id}`);
+
+        // Send OTP via email
+        await notificationService.sendOtpEmail(email, otp);
+        console.log('====================================================');
+        console.log(`📧 OTP FOR ${email}: ${otp}`);
+        console.log(`⏰ Valid for 5 minutes`);
+        console.log('====================================================');
+
+        res.json({ success: true, message: 'OTP sent to your email' });
+        console.log(`✅ [EMAIL-OTP] Response sent successfully for ${email}`);
+    } catch (error) {
+        console.error('❌ [EMAIL-OTP] Send OTP error:', error);
+        console.error('Error details:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+        });
+        res.status(500).json({ message: 'Server error sending OTP', error: error.message });
+    }
+});
+
 // @route   POST /api/auth/send-otp
 // @desc    Send OTP to phone number
 // @access  Public
+// DISABLED: OTP verification removed from registration flow
+/*
 router.post('/send-otp', async (req, res) => {
     try {
         console.log('📞 [OTP] Received send-otp request');
@@ -68,6 +133,8 @@ router.post('/send-otp', async (req, res) => {
         res.status(500).json({ message: 'Server error sending OTP', error: error.message });
     }
 });
+*/
+
 
 // @route   POST /api/auth/register
 // @desc    Register new delivery partner (driver)
@@ -76,12 +143,12 @@ router.post('/register', async (req, res) => {
     try {
         const { email, password, name, phone, vehicleType, vehicleNumber, licenseNumber, otp } = req.body;
 
-        // Verify OTP
+        // Verify Email OTP
         if (!otp) {
             return res.status(400).json({ message: 'OTP is required' });
         }
 
-        const verification = await PhoneVerification.findOne({ phone, otp });
+        const verification = await EmailVerification.findOne({ email, otp });
         if (!verification) {
             return res.status(400).json({ message: 'Invalid or expired OTP' });
         }
@@ -99,9 +166,8 @@ router.post('/register', async (req, res) => {
             });
         }
 
-        console.log('Using OTP verification:', verification._id);
         // Delete used OTP
-        await PhoneVerification.deleteOne({ _id: verification._id });
+        await EmailVerification.deleteOne({ _id: verification._id });
 
         console.log('Creating User...');
         // Create user with driver role

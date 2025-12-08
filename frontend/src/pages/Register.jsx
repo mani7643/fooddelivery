@@ -40,9 +40,9 @@ export default function Register() {
         });
     };
 
-    const handleSendOtp = async () => {
-        if (!formData.phone || formData.phone.length !== 10) {
-            setError('Please enter a valid 10-digit phone number first (without +91)');
+    const handleSendEmailOtp = async () => {
+        if (!formData.email) {
+            setError('Please enter your email address first');
             return;
         }
 
@@ -50,11 +50,10 @@ export default function Register() {
         setLoading(true);
 
         try {
-            // FIX: Send full international format to match registration logic
-            await authService.sendOtp(`+91 ${formData.phone}`);
+            await authService.sendEmailOtp(formData.email);
             setOtpSent(true);
             setTimer(30); // Start 30s timer
-            alert('OTP sent! Check console (for dev) or SMS.');
+            alert('OTP sent to your email! Please check your inbox.');
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to send OTP');
         } finally {
@@ -67,7 +66,7 @@ export default function Register() {
         setError('');
 
         if (!otpSent) {
-            setError('Please verify your phone number first');
+            setError('Please verify your email first by clicking Send OTP');
             return;
         }
 
@@ -227,40 +226,11 @@ export default function Register() {
                             }}>
                                 Email Address
                             </label>
-                            <input
-                                type="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                className="input"
-                                required
-                            />
-                        </div>
-
-                        {/* Phone */}
-                        <div style={{ marginBottom: 'var(--space-5)' }}>
-                            <label style={{
-                                display: 'block',
-                                marginBottom: 'var(--space-2)',
-                                fontSize: 'var(--font-size-sm)',
-                                fontWeight: 'var(--font-weight-medium)',
-                                color: 'var(--text-secondary)'
-                            }}>
-                                Phone Number
-                            </label>
                             <div className="input" style={{ display: 'flex', alignItems: 'center', padding: '0', overflow: 'hidden', paddingRight: '4px' }}>
-                                <span style={{
-                                    padding: 'var(--space-3)',
-                                    background: 'var(--surface-sunken)',
-                                    color: 'white',
-                                    borderRight: '1px solid var(--border-subtle)'
-                                }}>
-                                    +91
-                                </span>
                                 <input
-                                    type="tel"
-                                    name="phone"
-                                    value={formData.phone}
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
                                     onChange={handleChange}
                                     style={{
                                         border: 'none',
@@ -271,15 +241,12 @@ export default function Register() {
                                         color: 'white'
                                     }}
                                     required
-                                    pattern="[0-9]{10}"
-                                    maxLength="10"
-                                    title="Please enter 10 digit mobile number"
                                     disabled={otpSent}
                                 />
                                 <button
                                     type="button"
-                                    onClick={handleSendOtp}
-                                    disabled={(otpSent && timer > 0) || formData.phone.length !== 10 || loading}
+                                    onClick={handleSendEmailOtp}
+                                    disabled={(otpSent && timer > 0) || !formData.email || loading}
                                     style={{
                                         border: 'none',
                                         background: (otpSent && timer > 0) ? 'var(--surface-sunken)' : 'var(--primary-500)',
@@ -324,10 +291,51 @@ export default function Register() {
                                     pattern="[0-9]{6}"
                                 />
                                 <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '4px' }}>
-                                    Check your SMS for the code
+                                    Check your email for the verification code
                                 </p>
                             </div>
                         )}
+
+                        {/* Phone */}
+                        <div style={{ marginBottom: 'var(--space-5)' }}>
+                            <label style={{
+                                display: 'block',
+                                marginBottom: 'var(--space-2)',
+                                fontSize: 'var(--font-size-sm)',
+                                fontWeight: 'var(--font-weight-medium)',
+                                color: 'var(--text-secondary)'
+                            }}>
+                                Phone Number
+                            </label>
+                            <div className="input" style={{ display: 'flex', alignItems: 'center', padding: '0', overflow: 'hidden' }}>
+                                <span style={{
+                                    padding: 'var(--space-3)',
+                                    background: 'var(--surface-sunken)',
+                                    color: 'white',
+                                    borderRight: '1px solid var(--border-subtle)'
+                                }}>
+                                    +91
+                                </span>
+                                <input
+                                    type="tel"
+                                    name="phone"
+                                    value={formData.phone}
+                                    onChange={handleChange}
+                                    style={{
+                                        border: 'none',
+                                        flex: 1,
+                                        padding: 'var(--space-3)',
+                                        outline: 'none',
+                                        background: 'transparent',
+                                        color: 'white'
+                                    }}
+                                    required
+                                    pattern="[0-9]{10}"
+                                    maxLength="10"
+                                    title="Please enter 10 digit mobile number"
+                                />
+                            </div>
+                        </div>
 
                         {/* Password */}
                         <div style={{ marginBottom: 'var(--space-5)' }}>

@@ -29,6 +29,11 @@ export const authService = {
         return response.data;
     },
 
+    sendEmailOtp: async (email) => {
+        const response = await api.post('/auth/send-email-otp', { email });
+        return response.data;
+    },
+
     resetPassword: async (token, password) => {
         const response = await api.put(`/auth/resetpassword/${token}`, { password });
         if (response.data.token) {
