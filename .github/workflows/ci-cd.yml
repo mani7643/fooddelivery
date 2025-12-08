@@ -99,18 +99,43 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # Install Docker & Compose if missing
-            if ! command -v docker &> /dev/null; then
-               echo "Installing Docker..."
-               sudo apt-get update
-               sudo apt-get install -y docker.io
-               sudo usermod -aG docker ${{ secrets.EC2_USER }}
-            fi
-            if ! command -v docker-compose &> /dev/null; then
-               echo "Installing Docker Compose..."
-               sudo apt-get install -y docker-compose
+            # Detect OS and install Docker
+            if command -v apt-get &> /dev/null; then
+               # Ubuntu/Debian
+               if ! command -v docker &> /dev/null; then
+                   echo "Installing Docker (apt)..."
+                   sudo apt-get update
+                   sudo apt-get install -y docker.io
+                   sudo usermod -aG docker ${{ secrets.EC2_USER }}
+               fi
+               if ! command -v docker-compose &> /dev/null; then
+                   sudo apt-get install -y docker-compose
+               fi
+            elif command -v yum &> /dev/null; then
+               # Amazon Linux / CentOS
+               if ! command -v docker &> /dev/null; then
+                   echo "Installing Docker (yum)..."
+                   sudo yum update -y
+                   sudo yum install -y docker
+                   sudo service docker start
+                   sudo usermod -aG docker ${{ secrets.EC2_USER }}
+               fi
+               # Install docker-compose via binary for Amazon Linux
+               if ! command -v docker-compose &> /dev/null; then
+                   echo "Installing Docker Compose (binary)..."
+                   sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                   sudo chmod +x /usr/local/bin/docker-compose
+                   # Ensure it's in path
+                   if ! command -v docker-compose &> /dev/null; then
+                       sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+                   fi
+               fi
+            else
+               echo "Unsupported Package Manager. Please install Docker manually."
+               exit 1
             fi
 
+            mkdir -p /home/${{ secrets.EC2_USER }}/app
             cd /home/${{ secrets.EC2_USER }}/app
             
             # Create/Update .env file with secrets
