@@ -3,11 +3,12 @@ version: '3.8'
 services:
   backend:
     build: ./backend
+    image: ghcr.io/mani7643/fooddelivery-backend:latest
     ports:
       - "8000:8000"
     environment:
       - PORT=8000
-      - MONGO_URI=mongodb://mongo:27017/courier
+      - MONGO_URI=${MONGO_URI:-mongodb://mongo:27017/courier}
       - JWT_SECRET=your_jwt_secret_key_here
       - JWT_EXPIRE=30d
       # Add Email configs here if needed for prod
@@ -18,6 +19,7 @@ services:
 
   frontend:
     build: ./frontend
+    image: ghcr.io/mani7643/fooddelivery-frontend:latest
     ports:
       - "5173:80"
     depends_on:
