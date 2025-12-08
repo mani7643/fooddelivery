@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { authService } from '../services/authService';
 
@@ -10,6 +10,11 @@ export default function ResetPassword() {
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        console.log('✅ ResetPassword component loaded');
+        console.log('🔑 Token:', token);
+    }, [token]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -53,7 +58,7 @@ export default function ResetPassword() {
                         WebkitTextFillColor: 'transparent',
                         marginBottom: 'var(--space-2)'
                     }}>
-                        New Password
+                        Reset Password
                     </h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-lg)' }}>
                         Enter your new secure password
