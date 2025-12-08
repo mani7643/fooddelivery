@@ -323,8 +323,9 @@ router.post('/forgotpassword', async (req, res) => {
 
         await user.save({ validateBeforeSave: false });
 
-        // Create reset URL
-        const resetUrl = `${req.protocol}://localhost:5173/resetpassword/${resetToken}`;
+        // Create reset URL - use FRONTEND_URL from env or fallback to localhost
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const resetUrl = `${frontendUrl}/resetpassword/${resetToken}`;
 
         // Send password reset email
         await notificationService.sendPasswordResetEmail(user.email, resetUrl, user.name);
