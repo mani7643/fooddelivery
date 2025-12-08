@@ -20,36 +20,51 @@ const generateToken = (id) => {
 // @access  Public
 router.post('/send-otp', async (req, res) => {
     try {
+        console.log('📞 [OTP] Received send-otp request');
         const { phone } = req.body;
 
         if (!phone) {
+            console.log('❌ [OTP] No phone number provided');
             return res.status(400).json({ message: 'Phone number is required' });
         }
+
+        console.log(`📞 [OTP] Processing for phone: ${phone}`);
 
         // Check if phone already registered
         const existingUser = await User.findOne({ phone });
         if (existingUser) {
+            console.log(`⚠️ [OTP] Phone ${phone} already registered`);
             return res.status(400).json({ message: 'Phone number already registered' });
         }
 
         // Generate 6 digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        console.log(`🔢 [OTP] Generated OTP for ${phone}: ${otp}`);
 
         // Save OTP to DB (upsert)
-        await PhoneVerification.findOneAndUpdate(
+        console.log(`💾 [OTP] Saving to database...`);
+        const verification = await PhoneVerification.findOneAndUpdate(
             { phone },
             { phone, otp, createdAt: Date.now() },
             { upsert: true, new: true }
         );
+        console.log(`✅ [OTP] Saved to database with ID: ${verification._id}`);
 
         // Simulate sending SMS
         console.log('====================================================');
-        console.log(`OTP FOR ${phone}: ${otp}`);
+        console.log(`📱 OTP FOR ${phone}: ${otp}`);
+        console.log(`⏰ Valid for 5 minutes`);
         console.log('====================================================');
 
         res.json({ success: true, message: 'OTP sent successfully' });
+        console.log(`✅ [OTP] Response sent successfully for ${phone}`);
     } catch (error) {
-        console.error('Send OTP error:', error);
+        console.error('❌ [OTP] Send OTP error:', error);
+        console.error('Error details:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+        });
         res.status(500).json({ message: 'Server error sending OTP', error: error.message });
     }
 });

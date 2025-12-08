@@ -5,10 +5,12 @@ services:
     ports:
       - "8000:8000"
     environment:
+      - NODE_ENV=${NODE_ENV:-production}
       - PORT=8000
       - MONGO_URI=${MONGO_URI:-mongodb://mongo:27017/courier}
-      - JWT_SECRET=your_jwt_secret_key_here
-      - JWT_EXPIRE=30d
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret_key_here}
+      - JWT_EXPIRE=${JWT_EXPIRE:-30d}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5173}
       # Add Email configs here if needed for prod
     depends_on:
       - mongo

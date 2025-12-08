@@ -143,8 +143,11 @@ jobs:
             cd /home/${{ secrets.EC2_USER }}/app
             
             # Create/Update .env file with secrets
-            echo "MONGO_URI=${{ secrets.MONGO_URI }}" > .env
+            echo "NODE_ENV=production" > .env
+            echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> .env
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+            echo "JWT_EXPIRE=30d" >> .env
+            echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env
             # Add other secrets as needed e.g., EMAIL_USER, etc.
 
             # Login to GHCR on EC2 (as root/sudo to ensure docker access)
