@@ -326,11 +326,12 @@ router.post('/forgotpassword', async (req, res) => {
         // Create reset URL
         const resetUrl = `${req.protocol}://localhost:5173/resetpassword/${resetToken}`;
 
-        const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
+        // Send password reset email
+        await notificationService.sendPasswordResetEmail(user.email, resetUrl, user.name);
 
-        // In a real app, send this via email. For dev, log it.
+        // Also log to console for development
         console.log('====================================================');
-        console.log('PASSWORD RESET LINK (DEV ONLY):');
+        console.log('PASSWORD RESET LINK:');
         console.log(resetUrl);
         console.log('====================================================');
 

@@ -125,6 +125,65 @@ class NotificationService {
         }
     }
 
+    async sendPasswordResetEmail(to, resetUrl, name) {
+        const subject = 'Password Reset Request';
+        const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f5f5f5;">
+                <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h2 style="color: #333; text-align: center; margin-bottom: 20px;">Password Reset Request</h2>
+                    <p style="color: #666; font-size: 16px;">Hello${name ? ' ' + name : ''},</p>
+                    <p style="color: #666; font-size: 16px;">You requested to reset your password. Click the button below to create a new password:</p>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${resetUrl}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: bold; display: inline-block;">
+                            Reset Password
+                        </a>
+                    </div>
+                    
+                    <p style="color: #666; font-size: 14px;">Or copy and paste this link into your browser:</p>
+                    <p style="background: #f0f0f0; padding: 15px; border-radius: 5px; word-break: break-all; font-size: 14px; color: #4F46E5;">
+                        ${resetUrl}
+                    </p>
+                    
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                        <p style="color: #999; font-size: 13px; margin: 5px 0;">⏰ This link will expire in <strong>10 minutes</strong></p>
+                        <p style="color: #999; font-size: 13px; margin: 5px 0;">🔒 If you didn't request this, please ignore this email</p>
+                        <p style="color: #999; font-size: 13px; margin: 5px 0;">❓ Your password won't change until you create a new one</p>
+                    </div>
+                </div>
+                <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">
+                    This is an automated email, please do not reply.
+                </p>
+            </div>
+        `;
+
+        if (this.transporter) {
+            try {
+                const info = await this.transporter.sendMail({
+                    from: '"Courier Platform" <no-reply@courier.com>',
+                    to,
+                    subject,
+                    html
+                });
+
+                console.log(`✅ Password reset email sent to ${to}`);
+
+                // If using Ethereal, log the preview URL
+                const previewUrl = nodemailer.getTestMessageUrl(info);
+                if (previewUrl) {
+                    console.log('📬 ---------------------------------------------------');
+                    console.log(`📬 View Password Reset Email: ${previewUrl}`);
+                    console.log('📬 ---------------------------------------------------');
+                }
+            } catch (error) {
+                console.error('❌ Error sending password reset email:', error.message);
+                this.logEmailToConsole(to, subject, `Reset URL: ${resetUrl}`);
+            }
+        } else {
+            this.logEmailToConsole(to, subject, `Reset URL: ${resetUrl}`);
+        }
+    }
+
     async sendWelcomeSMS(phone, name) {
         // In a real app, integrate with Twilio/SNS here
         const message = `Welcome ${name}! Thanks for joining our delivery network. Download the app to start earning.`;
