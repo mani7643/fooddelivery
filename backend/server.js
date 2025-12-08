@@ -27,18 +27,35 @@ dotenv.config();
 const app = express();
 const httpServer = createServer(app);
 
+// Define allowed CORS origins
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://18.60.109.68:5173',
+    process.env.FRONTEND_URL
+].filter(Boolean);
+
 // Initialize Socket.io
 const io = new Server(httpServer, {
     cors: {
-        origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+        origin: allowedOrigins,
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
         credentials: true
     }
 });
 
 // Middleware
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true
 }));
 app.use(express.json());
