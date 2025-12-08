@@ -11,6 +11,9 @@ services:
       - JWT_SECRET=${JWT_SECRET:-your_jwt_secret_key_here}
       - JWT_EXPIRE=${JWT_EXPIRE:-30d}
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5173}
+      - EMAIL_SERVICE=${EMAIL_SERVICE}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASS=${EMAIL_PASS}
       # Add Email configs here if needed for prod
     depends_on:
       - mongo

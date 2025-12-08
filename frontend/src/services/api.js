@@ -1,8 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    // TEMPORARY: Hardcoded to bypass browser cache - change back to env var later
-    baseURL: 'http://18.60.109.68:8000/api',
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
     headers: {
         'Content-Type': 'application/json'
     }
