@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['driver', 'restaurant'],
+        enum: ['driver', 'restaurant', 'admin'],
         required: [true, 'Role is required']
     },
     profilePhoto: {
