@@ -38,6 +38,13 @@ export default function Login() {
                 return;
             }
 
+            // Check for rejected driver
+            if (role === 'driver' && data.user.verificationStatus === 'rejected') {
+                alert(`Your account verification was rejected.\n\nReason: ${data.user.verificationNotes || 'Documents unclear'}\n\nPlease upload valid documents again.`);
+                navigate('/driver/upload-documents');
+                return;
+            }
+
             navigate(`/${data.user.role}`);
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed. Please try again.');

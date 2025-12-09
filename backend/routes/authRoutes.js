@@ -274,6 +274,17 @@ router.post('/login', async (req, res) => {
         // Generate token
         const token = generateToken(user._id);
 
+        let driverInfo = {};
+        if (user.role === 'driver') {
+            const driver = await Driver.findOne({ userId: user._id });
+            if (driver) {
+                driverInfo = {
+                    verificationStatus: driver.verificationStatus,
+                    verificationNotes: driver.verificationNotes
+                };
+            }
+        }
+
         res.json({
             success: true,
             token,
@@ -282,7 +293,8 @@ router.post('/login', async (req, res) => {
                 email: user.email,
                 name: user.name,
                 phone: user.phone,
-                role: user.role
+                role: user.role,
+                ...driverInfo
             }
         });
     } catch (error) {
