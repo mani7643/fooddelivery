@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 
 export default function AdminVerifications() {
     const navigate = useNavigate();
+    const { logout } = useAuth();
     const [viewMode, setViewMode] = useState('verifications'); // 'verifications' or 'admins'
     const [drivers, setDrivers] = useState([]);
     const [admins, setAdmins] = useState([]);
@@ -114,22 +116,50 @@ export default function AdminVerifications() {
         }
     };
 
+    const handleLogout = () => {
+        if (window.confirm('Are you sure you want to logout?')) {
+            logout();
+            navigate('/login');
+        }
+    };
+
     return (
         <div style={{ minHeight: '100vh', padding: 'var(--space-6)', background: 'var(--bg-primary)' }}>
             <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
                 {/* Header */}
-                <div style={{ marginBottom: 'var(--space-8)' }}>
-                    <h1 className="text-4xl font-bold" style={{
-                        background: 'var(--gradient-primary)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        marginBottom: 'var(--space-2)'
-                    }}>
-                        Admin Dashboard
-                    </h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-lg)' }}>
-                        Manage verify requests and admin approvals
-                    </p>
+                <div style={{
+                    marginBottom: 'var(--space-8)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start'
+                }}>
+                    <div>
+                        <h1 className="text-4xl font-bold" style={{
+                            background: 'var(--gradient-primary)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            marginBottom: 'var(--space-2)'
+                        }}>
+                            Admin Dashboard
+                        </h1>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-lg)' }}>
+                            Manage verify requests and admin approvals
+                        </p>
+                    </div>
+                    <button
+                        onClick={handleLogout}
+                        className="btn"
+                        style={{
+                            background: 'var(--surface-raised)',
+                            color: 'var(--danger-400)',
+                            border: '1px solid var(--border-color)',
+                            padding: 'var(--space-3) var(--space-6)',
+                            fontWeight: 'var(--font-weight-medium)',
+                            boxShadow: 'var(--shadow-sm)'
+                        }}
+                    >
+                        Sign Out
+                    </button>
                 </div>
 
                 {/* Tabs */}
