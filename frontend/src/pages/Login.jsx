@@ -123,45 +123,6 @@ export default function Login() {
                         </button>
                     </div>
 
-                    {error && (
-                        <div style={{
-                            padding: 'var(--space-4)',
-                            background: 'rgba(239, 68, 68, 0.1)',
-                            border: '1px solid var(--danger-500)',
-                            borderRadius: 'var(--radius-lg)',
-                            color: 'var(--danger-400)',
-                            marginBottom: 'var(--space-6)'
-                        }}>
-                            {error}
-                        </div>
-                    )}
-
-                    <form onSubmit={handleSubmit}>
-                        <div style={{ marginBottom: 'var(--space-5)' }}>
-                            <label style={{
-                                display: 'block',
-                                marginBottom: 'var(--space-2)',
-                                fontSize: 'var(--font-size-sm)',
-                                fontWeight: 'var(--font-weight-medium)',
-                                color: 'var(--text-secondary)'
-                            }}>
-                                Email or Phone
-                            </label>
-                            <input
-                                type="text"
-                                name="emailOrPhone"
-                                value={formData.emailOrPhone}
-                                onChange={handleChange}
-                                className="input"
-                                placeholder={role === 'admin' ? 'admin@courier.com' : 'Email or Phone Number'}
-                                required
-                            />
-                        </div>
-
-                        <div style={{ marginBottom: 'var(--space-6)' }}>
-                            <label style={{
-                                display: 'block',
-                                marginBottom: 'var(--space-2)',
                                 fontSize: 'var(--font-size-sm)',
                                 fontWeight: 'var(--font-weight-medium)',
                                 color: 'var(--text-secondary)'
@@ -225,25 +186,26 @@ export default function Login() {
                             Sign up
                         </Link>
                     </div>
-                </div>
+                </div >
 
-                {/* Demo Credentials */}
-                <div style={{
-                    marginTop: 'var(--space-6)',
-                    padding: 'var(--space-4)',
-                    background: 'var(--bg-secondary)',
+        {/* Demo Credentials */ }
+        < div style = {{
+        marginTop: 'var(--space-6)',
+            padding: 'var(--space-4)',
+                background: 'var(--bg-secondary)',
                     borderRadius: 'var(--radius-lg)',
-                    border: '1px solid var(--border-color)'
-                }}>
-                    <p style={{
-                        fontSize: 'var(--font-size-sm)',
-                        color: 'var(--text-tertiary)',
-                        marginBottom: 'var(--space-2)'
-                    }}>
-                        💡 <strong>Demo Tip:</strong> Register as a Raider
-                    </p>
-                </div>
-            </div>
-        </div>
+                        border: '1px solid var(--border-color)'
+    }
+}>
+    <p style={{
+        fontSize: 'var(--font-size-sm)',
+        color: 'var(--text-tertiary)',
+        marginBottom: 'var(--space-2)'
+    }}>
+        💡 <strong>Demo Tip:</strong> Register as a Raider
+    </p>
+                </div >
+            </div >
+        </div >
     );
 }
