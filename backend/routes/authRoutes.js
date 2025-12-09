@@ -265,10 +265,18 @@ router.post('/register', async (req, res) => {
 // @access  Public
 router.post('/login', async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, emailOrPhone, password } = req.body;
+        const identifier = emailOrPhone || email;
 
-        // Check for user
-        const user = await User.findOne({ email }).select('+password');
+        if (!identifier || !password) {
+            return res.status(400).json({ message: 'Please provide email/phone and password' });
+        }
+
+        // Check for user by email OR phone
+        const user = await User.findOne({
+            $or: [{ email: identifier }, { phone: identifier }]
+        }).select('+password');
+
         if (!user) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }

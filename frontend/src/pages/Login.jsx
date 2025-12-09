@@ -7,7 +7,7 @@ export default function Login() {
     const { login } = useAuth();
     const [role, setRole] = useState('driver');
     const [formData, setFormData] = useState({
-        email: '',
+        emailOrPhone: '',
         password: ''
     });
     const [error, setError] = useState('');
@@ -26,6 +26,7 @@ export default function Login() {
         setLoading(true);
 
         try {
+            // Backend expects emailOrPhone
             const data = await login(formData);
 
             // Verify role matches selection
@@ -144,15 +145,15 @@ export default function Login() {
                                 fontWeight: 'var(--font-weight-medium)',
                                 color: 'var(--text-secondary)'
                             }}>
-                                Email Address
+                                Email or Phone
                             </label>
                             <input
-                                type="email"
-                                name="email"
-                                value={formData.email}
+                                type="text"
+                                name="emailOrPhone"
+                                value={formData.emailOrPhone}
                                 onChange={handleChange}
                                 className="input"
-                                placeholder={role === 'admin' ? 'admin@courier.com' : 'partner@courier.com'}
+                                placeholder={role === 'admin' ? 'admin@courier.com' : 'Email or Phone Number'}
                                 required
                             />
                         </div>
