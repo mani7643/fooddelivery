@@ -111,7 +111,8 @@ export default function Register() {
                 phone: `+91 ${formData.phone}`
             };
             const data = await register(submissionData);
-            navigate(`/${data.user.role}`);
+            // Redirect to document upload page for verification
+            navigate('/driver/upload-documents');
         } catch (err) {
             setError(err.response?.data?.message || 'Registration failed. Please try again.');
         } finally {

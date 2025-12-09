@@ -94,10 +94,26 @@ const driverSchema = new mongoose.Schema({
         ifscCode: String,
         bankName: String
     },
+    // Document URLs for verification
     documents: {
-        license: String,
-        aadhar: String,
+        aadhaarFront: String,
+        aadhaarBack: String,
+        dlFront: String,
+        dlBack: String,
+        panCard: String,
         vehicleRC: String
+    },
+    // Verification status
+    verificationStatus: {
+        type: String,
+        enum: ['pending_documents', 'pending_verification', 'verified', 'rejected'],
+        default: 'pending_documents'
+    },
+    verificationNotes: String,
+    verifiedAt: Date,
+    verifiedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
     }
 }, {
     timestamps: true

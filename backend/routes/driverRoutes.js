@@ -3,6 +3,7 @@ import { protect, authorize } from '../middleware/authMiddleware.js';
 import Driver from '../models/Driver.js';
 import Order from '../models/Order.js';
 import User from '../models/User.js';
+import { uploadDocuments } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -220,6 +221,90 @@ router.get('/earnings', protect, authorize('driver'), async (req, res) => {
     } catch (error) {
         console.error('Get earnings error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// @route   POST /api/driver/upload-documents
+// @desc    Upload driver verification documents
+// @access  Private (Driver only)
+router.post('/upload-documents', protect, authorize('driver'), uploadDocuments, async (req, res) => {
+    try {
+        // Find driver profile
+        const driver = await Driver.findOne({ userId: req.user._id });
+        if (!driver) {
+            return res.status(404).json({ message: 'Driver profile not found' });
+        }
+
+        // Build document URLs from uploaded files
+        const documentUrls = {};
+
+        if (req.files.aadhaarFront) {
+            documentUrls.aadhaarFront = `/uploads/documents/${req.files.aadhaarFront[0].filename}`;
+        }
+        if (req.files.aadhaarBack) {
+            documentUrls.aadhaarBack = `/uploads/documents/${req.files.aadhaarBack[0].filename}`;
+        }
+        if (req.files.dlFront) {
+            documentUrls.dlFront = `/uploads/documents/${req.files.dlFront[0].filename}`;
+        }
+        if (req.files.dlBack) {
+            documentUrls.dlBack = `/uploads/documents/${req.files.dlBack[0].filename}`;
+        }
+        if (req.files.panCard) {
+            documentUrls.panCard = `/uploads/documents/${req.files.panCard[0].filename}`;
+        }
+
+        // Update driver documents
+        driver.documents = {
+            ...driver.documents,
+            ...documentUrls
+        };
+
+        // Update verification status to pending_verification
+        driver.verificationStatus = 'pending_verification';
+
+        await driver.save();
+
+        console.log(`✅ Documents uploaded for driver: ${driver.name}`);
+
+        res.status(200).json({
+            success: true,
+            message: 'Documents uploaded successfully',
+            documents: driver.documents,
+            verificationStatus: driver.verificationStatus
+        });
+    } catch (error) {
+        console.error('Upload documents error:', error);
+        res.status(500).json({
+            message: 'Failed to upload documents',
+            error: error.message
+        });
+    }
+});
+
+// @route   GET /api/driver/documents
+// @desc    Get driver documents and verification status
+// @access  Private (Driver only)
+router.get('/documents', protect, authorize('driver'), async (req, res) => {
+    try {
+        const driver = await Driver.findOne({ userId: req.user._id });
+        if (!driver) {
+            return res.status(404).json({ message: 'Driver profile not found' });
+        }
+
+        res.status(200).json({
+            success: true,
+            documents: driver.documents,
+            verificationStatus: driver.verificationStatus,
+            verificationNotes: driver.verificationNotes,
+            verifiedAt: driver.verifiedAt
+        });
+    } catch (error) {
+        console.error('Get documents error:', error);
+        res.status(500).json({
+            message: 'Failed to get documents',
+            error: error.message
+        });
     }
 });
 

@@ -8,6 +8,7 @@ import DriverDashboard from './pages/driver/DriverDashboard';
 import DriverOrders from './pages/driver/DriverOrders';
 import DriverEarnings from './pages/driver/DriverEarnings';
 import DriverProfile from './pages/driver/DriverProfile';
+import UploadDocuments from './pages/driver/UploadDocuments';
 import Debug from './Debug';
 
 // Protected Route Component
@@ -53,6 +54,7 @@ function App() {
 
             {/* Driver Routes */}
             <Route path="/driver" element={<ProtectedRoute allowedRole="driver"><DriverDashboard /></ProtectedRoute>} />
+            <Route path="/driver/upload-documents" element={<ProtectedRoute allowedRole="driver"><UploadDocuments /></ProtectedRoute>} />
             <Route path="/driver/orders" element={<ProtectedRoute allowedRole="driver"><DriverOrders /></ProtectedRoute>} />
             <Route path="/driver/earnings" element={<ProtectedRoute allowedRole="driver"><DriverEarnings /></ProtectedRoute>} />
             <Route path="/driver/profile" element={<ProtectedRoute allowedRole="driver"><DriverProfile /></ProtectedRoute>} />
