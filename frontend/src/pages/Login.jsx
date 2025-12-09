@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 export default function Login() {
     const navigate = useNavigate();
     const { login } = useAuth();
+    const [role, setRole] = useState('driver');
     const [formData, setFormData] = useState({
         email: '',
         password: ''
@@ -26,6 +27,17 @@ export default function Login() {
 
         try {
             const data = await login(formData);
+
+            // Verify role matches selection
+            if (role === 'admin' && data.user.role !== 'admin') {
+                setError('Access denied. You are not an administrator.');
+                return;
+            }
+            if (role === 'driver' && data.user.role !== 'driver') {
+                setError('Please login using the correct portal for your account type.');
+                return;
+            }
+
             navigate(`/${data.user.role}`);
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed. Please try again.');
@@ -57,6 +69,52 @@ export default function Login() {
                     padding: 'var(--space-8)',
                     borderRadius: 'var(--radius-2xl)'
                 }}>
+                    {/* Role Selection Tabs */}
+                    <div style={{
+                        display: 'flex',
+                        background: 'var(--bg-secondary)',
+                        padding: 'var(--space-1)',
+                        borderRadius: 'var(--radius-lg)',
+                        marginBottom: 'var(--space-6)'
+                    }}>
+                        <button
+                            type="button"
+                            onClick={() => setRole('driver')}
+                            style={{
+                                flex: 1,
+                                padding: 'var(--space-3)',
+                                borderRadius: 'var(--radius-md)',
+                                border: 'none',
+                                background: role === 'driver' ? 'var(--surface-raised)' : 'transparent',
+                                color: role === 'driver' ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                                fontWeight: 'var(--font-weight-medium)',
+                                boxShadow: role === 'driver' ? 'var(--shadow-sm)' : 'none',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            Driver Partner
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setRole('admin')}
+                            style={{
+                                flex: 1,
+                                padding: 'var(--space-3)',
+                                borderRadius: 'var(--radius-md)',
+                                border: 'none',
+                                background: role === 'admin' ? 'var(--surface-raised)' : 'transparent',
+                                color: role === 'admin' ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                                fontWeight: 'var(--font-weight-medium)',
+                                boxShadow: role === 'admin' ? 'var(--shadow-sm)' : 'none',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            Admin
+                        </button>
+                    </div>
+
                     {error && (
                         <div style={{
                             padding: 'var(--space-4)',
@@ -87,7 +145,7 @@ export default function Login() {
                                 value={formData.email}
                                 onChange={handleChange}
                                 className="input"
-                                placeholder="your@email.com"
+                                placeholder={role === 'admin' ? 'admin@courier.com' : 'partner@courier.com'}
                                 required
                             />
                         </div>
@@ -137,10 +195,10 @@ export default function Login() {
                                         borderTop: '2px solid white',
                                         borderRadius: '50%'
                                     }}></span>
-                                    Signing in...
+                                    Signing in as {role === 'admin' ? 'Admin' : 'Driver'}...
                                 </span>
                             ) : (
-                                'Sign In'
+                                `Sign In as ${role === 'admin' ? 'Admin' : 'Driver'}`
                             )}
                         </button>
                     </form>

@@ -32,6 +32,11 @@ const userSchema = new mongoose.Schema({
         enum: ['driver', 'restaurant', 'admin'],
         required: [true, 'Role is required']
     },
+    accountStatus: {
+        type: String,
+        enum: ['active', 'pending', 'rejected', 'suspended'],
+        default: 'active'
+    },
     profilePhoto: {
         type: String,
         default: ''

@@ -4,7 +4,9 @@ import api from '../../services/api';
 
 export default function AdminVerifications() {
     const navigate = useNavigate();
+    const [viewMode, setViewMode] = useState('verifications'); // 'verifications' or 'admins'
     const [drivers, setDrivers] = useState([]);
+    const [admins, setAdmins] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedDriver, setSelectedDriver] = useState(null);
     const [showModal, setShowModal] = useState(false);
@@ -12,10 +14,15 @@ export default function AdminVerifications() {
     const [notes, setNotes] = useState('');
 
     useEffect(() => {
-        fetchPendingDrivers();
-    }, []);
+        if (viewMode === 'verifications') {
+            fetchPendingDrivers();
+        } else {
+            fetchPendingAdmins();
+        }
+    }, [viewMode]);
 
     const fetchPendingDrivers = async () => {
+        setLoading(true);
         try {
             const response = await api.get('/admin/pending-verifications');
             setDrivers(response.data.drivers);
@@ -26,10 +33,37 @@ export default function AdminVerifications() {
         }
     };
 
+    const fetchPendingAdmins = async () => {
+        setLoading(true);
+        try {
+            const response = await api.get('/admin/pending-admins');
+            setAdmins(response.data.admins);
+        } catch (error) {
+            console.error('Error fetching admins:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleViewDriver = (driver) => {
         setSelectedDriver(driver);
         setShowModal(true);
         setNotes('');
+    };
+
+    const handleApproveAdmin = async (adminId) => {
+        if (!window.confirm('Are you sure you want to approve this admin account?')) return;
+
+        setActionLoading(true);
+        try {
+            await api.put(`/admin/approve-admin/${adminId}`);
+            setAdmins(admins.filter(a => a._id !== adminId));
+            alert('Admin account approved successfully');
+        } catch (error) {
+            alert('Error approving admin: ' + (error.response?.data?.message || error.message));
+        } finally {
+            setActionLoading(false);
+        }
     };
 
     const handleApprove = async () => {
@@ -80,20 +114,6 @@ export default function AdminVerifications() {
         }
     };
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center" style={{ minHeight: '100vh' }}>
-                <div className="animate-spin" style={{
-                    width: '48px',
-                    height: '48px',
-                    border: '4px solid var(--bg-tertiary)',
-                    borderTop: '4px solid var(--primary-500)',
-                    borderRadius: '50%'
-                }}></div>
-            </div>
-        );
-    }
-
     return (
         <div style={{ minHeight: '100vh', padding: 'var(--space-6)', background: 'var(--bg-primary)' }}>
             <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -105,69 +125,220 @@ export default function AdminVerifications() {
                         WebkitTextFillColor: 'transparent',
                         marginBottom: 'var(--space-2)'
                     }}>
-                        Driver Verifications
+                        Admin Dashboard
                     </h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-lg)' }}>
-                        {drivers.length} pending verification{drivers.length !== 1 ? 's' : ''}
+                        Manage verify requests and admin approvals
                     </p>
                 </div>
 
-                {/* Drivers List */}
-                {drivers.length === 0 ? (
-                    <div className="glass" style={{
-                        padding: 'var(--space-12)',
-                        borderRadius: 'var(--radius-2xl)',
-                        textAlign: 'center'
-                    }}>
-                        <div style={{ fontSize: '64px', marginBottom: 'var(--space-4)' }}>✅</div>
-                        <h3 style={{ fontSize: 'var(--font-size-xl)', marginBottom: 'var(--space-2)' }}>
-                            All Caught Up!
-                        </h3>
-                        <p style={{ color: 'var(--text-secondary)' }}>
-                            No pending verifications at the moment.
-                        </p>
+                {/* Tabs */}
+                <div style={{
+                    display: 'flex',
+                    background: 'var(--bg-secondary)',
+                    padding: 'var(--space-1)',
+                    borderRadius: 'var(--radius-lg)',
+                    marginBottom: 'var(--space-6)',
+                    width: 'fit-content'
+                }}>
+                    <button
+                        onClick={() => setViewMode('verifications')}
+                        style={{
+                            padding: 'var(--space-3) var(--space-6)',
+                            borderRadius: 'var(--radius-md)',
+                            border: 'none',
+                            background: viewMode === 'verifications' ? 'var(--surface-raised)' : 'transparent',
+                            color: viewMode === 'verifications' ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                            fontWeight: 'var(--font-weight-medium)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            gap: 'var(--space-2)'
+                        }}
+                    >
+                        Pending Drivers
+                        {drivers.length > 0 && (
+                            <span style={{
+                                background: 'var(--primary-500)',
+                                color: 'white',
+                                padding: '2px 6px',
+                                borderRadius: '10px',
+                                fontSize: '0.75rem'
+                            }}>{drivers.length}</span>
+                        )}
+                    </button>
+                    <button
+                        onClick={() => setViewMode('admins')}
+                        style={{
+                            padding: 'var(--space-3) var(--space-6)',
+                            borderRadius: 'var(--radius-md)',
+                            border: 'none',
+                            background: viewMode === 'admins' ? 'var(--surface-raised)' : 'transparent',
+                            color: viewMode === 'admins' ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                            fontWeight: 'var(--font-weight-medium)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            gap: 'var(--space-2)'
+                        }}
+                    >
+                        Pending Admins
+                        {admins.length > 0 && (
+                            <span style={{
+                                background: 'var(--warning-500)',
+                                color: 'white',
+                                padding: '2px 6px',
+                                borderRadius: '10px',
+                                fontSize: '0.75rem'
+                            }}>{admins.length}</span>
+                        )}
+                    </button>
+                </div>
+
+                {loading ? (
+                    <div className="flex items-center justify-center" style={{ minHeight: '400px' }}>
+                        <div className="animate-spin" style={{
+                            width: '48px',
+                            height: '48px',
+                            border: '4px solid var(--bg-tertiary)',
+                            borderTop: '4px solid var(--primary-500)',
+                            borderRadius: '50%'
+                        }}></div>
                     </div>
                 ) : (
-                    <div style={{ display: 'grid', gap: 'var(--space-4)' }}>
-                        {drivers.map((driver) => (
-                            <div
-                                key={driver._id}
-                                className="glass"
-                                style={{
-                                    padding: 'var(--space-6)',
-                                    borderRadius: 'var(--radius-xl)',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center'
-                                }}
-                            >
-                                <div>
-                                    <h3 style={{
-                                        fontSize: 'var(--font-size-lg)',
-                                        fontWeight: 'var(--font-weight-semibold)',
-                                        marginBottom: 'var(--space-2)'
-                                    }}>
-                                        {driver.userId?.name || driver.name}
+                    <>
+                        {/* DRIVER VERIFICATIONS LIST */}
+                        {viewMode === 'verifications' && (
+                            drivers.length === 0 ? (
+                                <div className="glass" style={{
+                                    padding: 'var(--space-12)',
+                                    borderRadius: 'var(--radius-2xl)',
+                                    textAlign: 'center'
+                                }}>
+                                    <div style={{ fontSize: '64px', marginBottom: 'var(--space-4)' }}>✅</div>
+                                    <h3 style={{ fontSize: 'var(--font-size-xl)', marginBottom: 'var(--space-2)' }}>
+                                        All Drivers Verified!
                                     </h3>
-                                    <div style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-sm)' }}>
-                                        <p>📧 {driver.userId?.email}</p>
-                                        <p>📱 {driver.userId?.phone || driver.phone}</p>
-                                        <p>🚗 {driver.vehicleType} - {driver.vehicleNumber}</p>
-                                    </div>
+                                    <p style={{ color: 'var(--text-secondary)' }}>
+                                        No pending driver verifications at the moment.
+                                    </p>
                                 </div>
-                                <button
-                                    onClick={() => handleViewDriver(driver)}
-                                    className="btn btn-primary"
-                                    style={{ padding: 'var(--space-3) var(--space-6)' }}
-                                >
-                                    Review Documents
-                                </button>
-                            </div>
-                        ))}
-                    </div>
+                            ) : (
+                                <div style={{ display: 'grid', gap: 'var(--space-4)' }}>
+                                    {drivers.map((driver) => (
+                                        <div
+                                            key={driver._id}
+                                            className="glass"
+                                            style={{
+                                                padding: 'var(--space-6)',
+                                                borderRadius: 'var(--radius-xl)',
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center'
+                                            }}
+                                        >
+                                            <div>
+                                                <h3 style={{
+                                                    fontSize: 'var(--font-size-lg)',
+                                                    fontWeight: 'var(--font-weight-semibold)',
+                                                    marginBottom: 'var(--space-2)'
+                                                }}>
+                                                    {driver.userId?.name || driver.name}
+                                                </h3>
+                                                <div style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-sm)' }}>
+                                                    <p>📧 {driver.userId?.email}</p>
+                                                    <p>📱 {driver.userId?.phone || driver.phone}</p>
+                                                    <p>🚗 {driver.vehicleType} - {driver.vehicleNumber}</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => handleViewDriver(driver)}
+                                                className="btn btn-primary"
+                                                style={{ padding: 'var(--space-3) var(--space-6)' }}
+                                            >
+                                                Review Documents
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )
+                        )}
+
+                        {/* PENDING ADMINS LIST */}
+                        {viewMode === 'admins' && (
+                            admins.length === 0 ? (
+                                <div className="glass" style={{
+                                    padding: 'var(--space-12)',
+                                    borderRadius: 'var(--radius-2xl)',
+                                    textAlign: 'center'
+                                }}>
+                                    <div style={{ fontSize: '64px', marginBottom: 'var(--space-4)' }}>🛡️</div>
+                                    <h3 style={{ fontSize: 'var(--font-size-xl)', marginBottom: 'var(--space-2)' }}>
+                                        No Pending Admins
+                                    </h3>
+                                    <p style={{ color: 'var(--text-secondary)' }}>
+                                        All admin accounts are active.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div style={{ display: 'grid', gap: 'var(--space-4)' }}>
+                                    {admins.map((admin) => (
+                                        <div
+                                            key={admin._id}
+                                            className="glass"
+                                            style={{
+                                                padding: 'var(--space-6)',
+                                                borderRadius: 'var(--radius-xl)',
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center'
+                                            }}
+                                        >
+                                            <div>
+                                                <h3 style={{
+                                                    fontSize: 'var(--font-size-lg)',
+                                                    fontWeight: 'var(--font-weight-semibold)',
+                                                    marginBottom: 'var(--space-2)'
+                                                }}>
+                                                    {admin.name}
+                                                </h3>
+                                                <div style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-sm)' }}>
+                                                    <p>📧 {admin.email}</p>
+                                                    <p>📱 {admin.phone}</p>
+                                                    <p style={{ marginTop: '4px' }}>
+                                                        <span style={{
+                                                            background: 'rgba(234, 179, 8, 0.2)',
+                                                            color: 'var(--warning-400)',
+                                                            padding: '2px 8px',
+                                                            borderRadius: '4px',
+                                                            fontSize: '0.75rem'
+                                                        }}>Pending Approval</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => handleApproveAdmin(admin._id)}
+                                                disabled={actionLoading}
+                                                style={{
+                                                    padding: 'var(--space-3) var(--space-6)',
+                                                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: 'var(--radius-lg)',
+                                                    fontWeight: 'var(--font-weight-semibold)',
+                                                    cursor: actionLoading ? 'not-allowed' : 'pointer',
+                                                    opacity: actionLoading ? 0.6 : 1
+                                                }}
+                                            >
+                                                {actionLoading ? 'Approving...' : '✓ Approve Access'}
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )
+                        )}
+                    </>
                 )}
 
-                {/* Modal */}
+                {/* Modal for Drivers (Existing) */}
                 {showModal && selectedDriver && (
                     <div style={{
                         position: 'fixed',

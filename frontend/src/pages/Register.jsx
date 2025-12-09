@@ -79,26 +79,25 @@ export default function Register() {
             return;
         }
 
-        // Vehicle Number Validation (Indian Format)
-        const vehicleNumber = formData.vehicleNumber.replace(/\s/g, ''); // Remove spaces for check
-        // Regex: 2 chars (State) + 2 digits (Dist) + 1-3 chars (Series, optional) + 4 digits (Num)
-        // e.g., MH01AB1234, MH011234
-        const vehicleRegex = /^[A-Z]{2}[0-9]{2}[A-Z]{0,3}[0-9]{4}$/;
+        // Driver Specific Validations
+        if (formData.role === 'driver') {
+            // Vehicle Number Validation (Indian Format)
+            const vehicleNumber = formData.vehicleNumber.replace(/\s/g, ''); // Remove spaces for check
+            const vehicleRegex = /^[A-Z]{2}[0-9]{2}[A-Z]{0,3}[0-9]{4}$/;
 
-        if (!vehicleRegex.test(vehicleNumber)) {
-            setError('Please enter a valid Indian vehicle number (e.g., MH01AB1234)');
-            return;
-        }
+            if (!vehicleRegex.test(vehicleNumber)) {
+                setError('Please enter a valid Indian vehicle number (e.g., MH01AB1234)');
+                return;
+            }
 
-        // Driving License Validation (Indian Format)
-        const licenseNumber = formData.licenseNumber.replace(/\s|-/g, ''); // Remove spaces/dashes
-        // Regex: 15 alphanumeric characters (State Code + RTO + Year + Digits)
-        // e.g. MH1420110012345
-        const licenseRegex = /^[A-Z]{2}[0-9]{13}$/;
+            // Driving License Validation (Indian Format)
+            const licenseNumber = formData.licenseNumber.replace(/\s|-/g, ''); // Remove spaces/dashes
+            const licenseRegex = /^[A-Z]{2}[0-9]{13}$/;
 
-        if (!licenseRegex.test(licenseNumber)) {
-            setError('Please enter a valid Indian Driving License number (15 characters without spaces, e.g. MH1420110012345)');
-            return;
+            if (!licenseRegex.test(licenseNumber)) {
+                setError('Please enter a valid Indian Driving License number (15 characters without spaces, e.g. MH1420110012345)');
+                return;
+            }
         }
 
         setLoading(true);
@@ -110,9 +109,16 @@ export default function Register() {
                 name: `${formData.firstName} ${formData.lastName}`.trim(),
                 phone: `+91 ${formData.phone}`
             };
+
             const data = await register(submissionData);
-            // Redirect to document upload page for verification
-            navigate('/driver/upload-documents');
+
+            // Redirect based on role
+            if (formData.role === 'admin') {
+                navigate('/admin');
+            } else {
+                // Redirect to document upload page for driver verification
+                navigate('/driver/upload-documents');
+            }
         } catch (err) {
             setError(err.response?.data?.message || 'Registration failed. Please try again.');
         } finally {
@@ -156,6 +162,58 @@ export default function Register() {
                         </div>
                     )}
 
+                    {/* Role Selection Tabs */}
+                    <div style={{
+                        display: 'flex',
+                        background: 'var(--bg-secondary)',
+                        padding: 'var(--space-1)',
+                        borderRadius: 'var(--radius-lg)',
+                        marginBottom: 'var(--space-6)'
+                    }}>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setFormData({ ...formData, role: 'driver' });
+                                setError('');
+                            }}
+                            style={{
+                                flex: 1,
+                                padding: 'var(--space-3)',
+                                borderRadius: 'var(--radius-md)',
+                                border: 'none',
+                                background: formData.role === 'driver' ? 'var(--surface-raised)' : 'transparent',
+                                color: formData.role === 'driver' ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                                fontWeight: 'var(--font-weight-medium)',
+                                boxShadow: formData.role === 'driver' ? 'var(--shadow-sm)' : 'none',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            Driver Partner
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setFormData({ ...formData, role: 'admin' });
+                                setError('');
+                            }}
+                            style={{
+                                flex: 1,
+                                padding: 'var(--space-3)',
+                                borderRadius: 'var(--radius-md)',
+                                border: 'none',
+                                background: formData.role === 'admin' ? 'var(--surface-raised)' : 'transparent',
+                                color: formData.role === 'admin' ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                                fontWeight: 'var(--font-weight-medium)',
+                                boxShadow: formData.role === 'admin' ? 'var(--shadow-sm)' : 'none',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            Admin
+                        </button>
+                    </div>
+
                     <form onSubmit={handleSubmit}>
                         {/* Title */}
                         <div style={{ marginBottom: 'var(--space-6)', textAlign: 'center' }}>
@@ -164,10 +222,10 @@ export default function Register() {
                                 fontSize: 'var(--font-size-xl)',
                                 fontWeight: 'var(--font-weight-semibold)'
                             }}>
-                                🏍️ Partner Registration
+                                {formData.role === 'admin' ? '🛡️ Admin Registration' : '🏍️ Partner Registration'}
                             </h3>
                             <p style={{ color: 'var(--text-tertiary)', fontSize: 'var(--font-size-sm)', marginTop: 'var(--space-2)' }}>
-                                Start earning with us today
+                                {formData.role === 'admin' ? 'Create an admin account' : 'Start earning with us today'}
                             </p>
                         </div>
 
@@ -364,86 +422,91 @@ export default function Register() {
                             </p>
                         </div>
 
-                        {/* Vehicle Type */}
-                        <div style={{ marginBottom: 'var(--space-5)' }}>
-                            <label style={{
-                                display: 'block',
-                                marginBottom: 'var(--space-2)',
-                                fontSize: 'var(--font-size-sm)',
-                                fontWeight: 'var(--font-weight-medium)',
-                                color: 'var(--text-secondary)'
-                            }}>
-                                Vehicle Type
-                            </label>
-                            <select
-                                name="vehicleType"
-                                value={formData.vehicleType}
-                                onChange={handleChange}
-                                className="input"
-                                required
-                            >
-                                <option value="bike">Bike</option>
-                                <option value="scooter">Scooter</option>
-                                <option value="car">Car</option>
-                                <option value="bicycle">Bicycle</option>
-                            </select>
-                        </div>
+                        {/* Driver Specific Fields */}
+                        {formData.role === 'driver' && (
+                            <>
+                                {/* Vehicle Type */}
+                                <div style={{ marginBottom: 'var(--space-5)' }}>
+                                    <label style={{
+                                        display: 'block',
+                                        marginBottom: 'var(--space-2)',
+                                        fontSize: 'var(--font-size-sm)',
+                                        fontWeight: 'var(--font-weight-medium)',
+                                        color: 'var(--text-secondary)'
+                                    }}>
+                                        Vehicle Type
+                                    </label>
+                                    <select
+                                        name="vehicleType"
+                                        value={formData.vehicleType}
+                                        onChange={handleChange}
+                                        className="input"
+                                        required
+                                    >
+                                        <option value="bike">Bike</option>
+                                        <option value="scooter">Scooter</option>
+                                        <option value="car">Car</option>
+                                        <option value="bicycle">Bicycle</option>
+                                    </select>
+                                </div>
 
-                        {/* Vehicle Number */}
-                        <div style={{ marginBottom: 'var(--space-5)' }}>
-                            <label style={{
-                                display: 'block',
-                                marginBottom: 'var(--space-2)',
-                                fontSize: 'var(--font-size-sm)',
-                                fontWeight: 'var(--font-weight-medium)',
-                                color: 'var(--text-secondary)'
-                            }}>
-                                Vehicle Number
-                            </label>
-                            <input
-                                type="text"
-                                name="vehicleNumber"
-                                value={formData.vehicleNumber}
-                                onChange={(e) => {
-                                    const upperValue = e.target.value.toUpperCase();
-                                    setFormData({ ...formData, vehicleNumber: upperValue });
-                                }}
-                                className="input"
-                                required
-                                style={{ textTransform: 'uppercase' }}
-                            />
-                            <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '4px' }}>
-                                Indian format required (e.g. MH01AB1234)
-                            </p>
-                        </div>
+                                {/* Vehicle Number */}
+                                <div style={{ marginBottom: 'var(--space-5)' }}>
+                                    <label style={{
+                                        display: 'block',
+                                        marginBottom: 'var(--space-2)',
+                                        fontSize: 'var(--font-size-sm)',
+                                        fontWeight: 'var(--font-weight-medium)',
+                                        color: 'var(--text-secondary)'
+                                    }}>
+                                        Vehicle Number
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="vehicleNumber"
+                                        value={formData.vehicleNumber}
+                                        onChange={(e) => {
+                                            const upperValue = e.target.value.toUpperCase();
+                                            setFormData({ ...formData, vehicleNumber: upperValue });
+                                        }}
+                                        className="input"
+                                        required
+                                        style={{ textTransform: 'uppercase' }}
+                                    />
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+                                        Indian format required (e.g. MH01AB1234)
+                                    </p>
+                                </div>
 
-                        {/* License Number */}
-                        <div style={{ marginBottom: 'var(--space-6)' }}>
-                            <label style={{
-                                display: 'block',
-                                marginBottom: 'var(--space-2)',
-                                fontSize: 'var(--font-size-sm)',
-                                fontWeight: 'var(--font-weight-medium)',
-                                color: 'var(--text-secondary)'
-                            }}>
-                                License Number
-                            </label>
-                            <input
-                                type="text"
-                                name="licenseNumber"
-                                value={formData.licenseNumber}
-                                onChange={(e) => {
-                                    const upperValue = e.target.value.toUpperCase();
-                                    setFormData({ ...formData, licenseNumber: upperValue });
-                                }}
-                                className="input"
-                                required
-                                maxLength="15"
-                            />
-                            <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '4px' }}>
-                                Indian format required (15 chars, e.g. MH1420110012345)
-                            </p>
-                        </div>
+                                {/* License Number */}
+                                <div style={{ marginBottom: 'var(--space-6)' }}>
+                                    <label style={{
+                                        display: 'block',
+                                        marginBottom: 'var(--space-2)',
+                                        fontSize: 'var(--font-size-sm)',
+                                        fontWeight: 'var(--font-weight-medium)',
+                                        color: 'var(--text-secondary)'
+                                    }}>
+                                        License Number
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="licenseNumber"
+                                        value={formData.licenseNumber}
+                                        onChange={(e) => {
+                                            const upperValue = e.target.value.toUpperCase();
+                                            setFormData({ ...formData, licenseNumber: upperValue });
+                                        }}
+                                        className="input"
+                                        required
+                                        maxLength="15"
+                                    />
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+                                        Indian format required (15 chars, e.g. MH1420110012345)
+                                    </p>
+                                </div>
+                            </>
+                        )}
 
                         <button
                             type="submit"
@@ -463,7 +526,7 @@ export default function Register() {
                                     Creating account...
                                 </span>
                             ) : (
-                                'Join as Partner'
+                                formData.role === 'admin' ? 'Create Admin Account' : 'Join as Partner'
                             )}
                         </button>
                     </form>

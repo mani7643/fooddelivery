@@ -141,7 +141,7 @@ router.post('/send-otp', async (req, res) => {
 // @access  Public
 router.post('/register', async (req, res) => {
     try {
-        const { email, password, name, phone, vehicleType, vehicleNumber, licenseNumber, otp } = req.body;
+        const { email, password, name, phone, vehicleType, vehicleNumber, licenseNumber, otp, role } = req.body;
 
         // Verify Email OTP
         if (!otp) {
@@ -159,47 +159,61 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ message: 'User already exists with this email' });
         }
 
-        // Validate required driver fields
-        if (!vehicleNumber || !licenseNumber) {
-            return res.status(400).json({
-                message: 'Vehicle number and license number are required'
-            });
+        const userRole = role === 'admin' ? 'admin' : 'driver';
+
+        // Validate required driver fields ONLY if registering as driver
+        if (userRole === 'driver') {
+            if (!vehicleNumber || !licenseNumber) {
+                return res.status(400).json({
+                    message: 'Vehicle number and license number are required'
+                });
+            }
         }
 
         // Delete used OTP
         await EmailVerification.deleteOne({ _id: verification._id });
 
-        console.log('Creating User...');
-        // Create user with driver role
+        console.log(`Creating User with role: ${userRole}...`);
+
+        // Create user
         const user = await User.create({
             email,
             password,
             name,
             phone,
-            role: 'driver' // Always driver
+            role: userRole,
+            accountStatus: userRole === 'admin' ? 'pending' : 'active'
         });
 
-        console.log('Creating driver profile for:', user.email);
+        // Create driver profile ONLY if role is driver
+        if (userRole === 'driver') {
+            console.log('Creating driver profile for:', user.email);
+            const driver = await Driver.create({
+                userId: user._id,
+                name: name,
+                phone: phone,
+                vehicleType: vehicleType || 'bike',
+                vehicleNumber: vehicleNumber,
+                licenseNumber: licenseNumber
+            });
+            console.log('✅ Driver profile created successfully:', driver._id);
+        } else {
+            console.log('✅ Admin user created successfully');
+        }
 
-        // Create driver profile
-        const driver = await Driver.create({
-            userId: user._id,
-            name: name,
-            phone: phone,
-            vehicleType: vehicleType || 'bike',
-            vehicleNumber: vehicleNumber,
-            licenseNumber: licenseNumber
-        });
-
-        console.log('✅ Driver profile created successfully:', driver._id);
         console.log('✅ Registration completed for:', user.email);
 
-        // Send welcome notifications (async, don't await/block response)
+        // Send welcome notifications
         notificationService.sendWelcomeEmail(user.email, user.name);
-        notificationService.sendWelcomeSMS(user.phone, user.name);
+        if (userRole === 'driver') {
+            notificationService.sendWelcomeSMS(user.phone, user.name);
+        }
 
-        // Generate token
-        const token = generateToken(user._id);
+        // Generate token only if active
+        let token = null;
+        if (user.accountStatus === 'active') {
+            token = generateToken(user._id);
+        }
 
         res.status(201).json({
             success: true,
@@ -209,8 +223,12 @@ router.post('/register', async (req, res) => {
                 email: user.email,
                 name: user.name,
                 phone: user.phone,
-                role: user.role
-            }
+                role: user.role,
+                accountStatus: user.accountStatus
+            },
+            message: userRole === 'admin'
+                ? 'Admin account created successfully. Please wait for approval.'
+                : 'Registration successful'
         });
     } catch (error) {
         console.error('❌ Registration error:', error);
@@ -286,26 +304,7 @@ router.get('/me', async (req, res) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const user = await User.findById(decoded.id).select('-password');
 
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        res.json({
-            success: true,
-            user: {
-                id: user._id,
-                email: user.email,
-                name: user.name,
-                phone: user.phone,
-                role: user.role,
-                profilePhoto: user.profilePhoto
-            }
-        });
-    } catch (error) {
-        console.error('Get user error:', error);
-        res.status(500).json({ message: 'Server error', error: error.message });
-    }
-});
+    });
 
 // @route   POST /api/auth/forgotpassword
 // @desc    Forgot password

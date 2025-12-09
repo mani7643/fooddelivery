@@ -85,4 +85,58 @@ router.get('/drivers', protect, authorize('admin'), async (req, res) => {
     }
 });
 
+// @route   GET /api/admin/pending-admins
+// @desc    Get all admins pending approval
+// @access  Private (Admin only)
+router.get('/pending-admins', protect, authorize('admin'), async (req, res) => {
+    try {
+        const admins = await User.find({
+            role: 'admin',
+            accountStatus: 'pending'
+        }).select('-password');
+
+        res.json({ success: true, admins });
+    } catch (error) {
+        console.error('Get pending admins error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// @route   PUT /api/admin/approve-admin/:userId
+// @desc    Approve admin account
+// @access  Private (Admin only)
+router.put('/approve-admin/:userId', protect, authorize('admin'), async (req, res) => {
+    try {
+        const user = await User.findById(req.params.userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (user.role !== 'admin') {
+            return res.status(400).json({ message: 'User is not an admin' });
+        }
+
+        user.accountStatus = 'active';
+        await user.save();
+
+        // Send email notification (optional)
+        // await notificationService.sendAdminApprovalEmail(user.email, user.name);
+
+        res.json({
+            success: true,
+            message: 'Admin account approved successfully',
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                accountStatus: user.accountStatus
+            }
+        });
+    } catch (error) {
+        console.error('Approve admin error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
 export default router;
