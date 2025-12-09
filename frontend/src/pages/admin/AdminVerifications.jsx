@@ -392,10 +392,10 @@ export default function AdminVerifications() {
                                         <div>
                                             <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>Aadhaar Front</p>
                                             <img
-                                                src={`http://localhost:8000${selectedDriver.documents.aadhaarFront}`}
+                                                src={selectedDriver.documents.aadhaarFront}
                                                 alt="Aadhaar Front"
                                                 style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                onClick={() => window.open(`http://localhost:8000${selectedDriver.documents.aadhaarFront}`, '_blank')}
+                                                onClick={() => window.open(selectedDriver.documents.aadhaarFront, '_blank')}
                                             />
                                         </div>
                                     )}
@@ -403,10 +403,10 @@ export default function AdminVerifications() {
                                         <div>
                                             <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>Aadhaar Back</p>
                                             <img
-                                                src={`http://localhost:8000${selectedDriver.documents.aadhaarBack}`}
+                                                src={selectedDriver.documents.aadhaarBack}
                                                 alt="Aadhaar Back"
                                                 style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                onClick={() => window.open(`http://localhost:8000${selectedDriver.documents.aadhaarBack}`, '_blank')}
+                                                onClick={() => window.open(selectedDriver.documents.aadhaarBack, '_blank')}
                                             />
                                         </div>
                                     )}
@@ -414,10 +414,10 @@ export default function AdminVerifications() {
                                         <div>
                                             <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>DL Front</p>
                                             <img
-                                                src={`http://localhost:8000${selectedDriver.documents.dlFront}`}
+                                                src={selectedDriver.documents.dlFront}
                                                 alt="DL Front"
                                                 style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                onClick={() => window.open(`http://localhost:8000${selectedDriver.documents.dlFront}`, '_blank')}
+                                                onClick={() => window.open(selectedDriver.documents.dlFront, '_blank')}
                                             />
                                         </div>
                                     )}
@@ -425,10 +425,10 @@ export default function AdminVerifications() {
                                         <div>
                                             <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>DL Back</p>
                                             <img
-                                                src={`http://localhost:8000${selectedDriver.documents.dlBack}`}
+                                                src={selectedDriver.documents.dlBack}
                                                 alt="DL Back"
                                                 style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                onClick={() => window.open(`http://localhost:8000${selectedDriver.documents.dlBack}`, '_blank')}
+                                                onClick={() => window.open(selectedDriver.documents.dlBack, '_blank')}
                                             />
                                         </div>
                                     )}
@@ -436,10 +436,10 @@ export default function AdminVerifications() {
                                         <div>
                                             <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>PAN Card</p>
                                             <img
-                                                src={`http://localhost:8000${selectedDriver.documents.panCard}`}
+                                                src={selectedDriver.documents.panCard}
                                                 alt="PAN Card"
                                                 style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                onClick={() => window.open(`http://localhost:8000${selectedDriver.documents.panCard}`, '_blank')}
+                                                onClick={() => window.open(selectedDriver.documents.panCard, '_blank')}
                                             />
                                         </div>
                                     )}
