@@ -160,6 +160,14 @@ router.post('/register', async (req, res) => {
         }
 
         const userRole = role === 'admin' ? 'admin' : 'driver';
+        let accountStatus = 'active';
+
+        // Admin Approval Logic
+        if (userRole === 'admin') {
+            const adminCount = await User.countDocuments({ role: 'admin' });
+            // First admin is active, subsequent are pending
+            accountStatus = adminCount === 0 ? 'active' : 'pending';
+        }
 
         // Validate required driver fields ONLY if registering as driver
         if (userRole === 'driver') {
@@ -182,7 +190,7 @@ router.post('/register', async (req, res) => {
             name,
             phone,
             role: userRole,
-            accountStatus: userRole === 'admin' ? 'pending' : 'active'
+            accountStatus: accountStatus
         });
 
         // Create driver profile ONLY if role is driver
@@ -198,7 +206,7 @@ router.post('/register', async (req, res) => {
             });
             console.log('✅ Driver profile created successfully:', driver._id);
         } else {
-            console.log('✅ Admin user created successfully');
+            console.log(`✅ Admin user created successfully (Status: ${accountStatus})`);
         }
 
         console.log('✅ Registration completed for:', user.email);
@@ -226,8 +234,8 @@ router.post('/register', async (req, res) => {
                 role: user.role,
                 accountStatus: user.accountStatus
             },
-            message: userRole === 'admin'
-                ? 'Admin account created successfully. Please wait for approval.'
+            message: user.accountStatus === 'pending'
+                ? 'Admin account created. Please wait for another admin to approve you.'
                 : 'Registration successful'
         });
     } catch (error) {
@@ -269,6 +277,13 @@ router.post('/login', async (req, res) => {
         const isMatch = await user.comparePassword(password);
         if (!isMatch) {
             return res.status(401).json({ message: 'Invalid credentials' });
+        }
+
+        // Security Check: Block Pending Admins
+        if (user.role === 'admin' && user.accountStatus === 'pending') {
+            return res.status(403).json({
+                message: 'Your admin account is pending approval. Please contact an existing administrator.'
+            });
         }
 
         // Generate token

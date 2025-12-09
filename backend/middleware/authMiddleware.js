@@ -19,6 +19,13 @@ export const protect = async (req, res, next) => {
                 return res.status(401).json({ message: 'User not found' });
             }
 
+            // Enforce Account Status
+            if (req.user.accountStatus === 'pending') {
+                return res.status(403).json({
+                    message: 'Account pending approval. Access denied.'
+                });
+            }
+
             next();
         } catch (error) {
             console.error('Auth middleware error:', error);
