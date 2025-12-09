@@ -82,10 +82,10 @@ export default function UploadDocuments() {
                 }
             });
 
-            setSuccess('Documents uploaded successfully! Redirecting to dashboard...');
+            setSuccess('Documents uploaded successfully! Redirecting...');
 
             setTimeout(() => {
-                navigate('/driver');
+                navigate('/driver/verification-pending');
             }, 2000);
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to upload documents');

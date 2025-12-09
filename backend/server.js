@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url';
 // Import routes
 import authRoutes from './routes/authRoutes.js';
 import driverRoutes from './routes/driverRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 // import restaurantRoutes from './routes/restaurantRoutes.js' // removed restaurant routes
 import orderRoutes from './routes/orderRoutes.js';
 
@@ -96,6 +97,7 @@ app.set('io', io);
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/driver', driverRoutes);
+app.use('/api/admin', adminRoutes);
 // app.use('/api/restaurant', restaurantRoutes); // removed restaurant routes
 app.use('/api/orders', orderRoutes);
 

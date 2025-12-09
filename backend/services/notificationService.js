@@ -184,6 +184,74 @@ class NotificationService {
         }
     }
 
+    async sendVerificationApprovalEmail(to, driverName) {
+        const subject = 'Verification Approved - Start Accepting Orders!';
+        const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f5f5f5;">
+                <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h2 style="color: #10b981; text-align: center; margin-bottom: 20px;">🎉 Verification Approved!</h2>
+                    <p style="color: #666; font-size: 16px;">Hello ${driverName},</p>
+                    <p style="color: #666; font-size: 16px;">Great news! Your documents have been verified and approved.</p>
+                    
+                    <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 20px; border-radius: 8px; text-align: center; margin: 30px 0;">
+                        <p style="color: white; font-size: 18px; font-weight: bold; margin: 0;">You can now start accepting orders!</p>
+                    </div>
+                    
+                    <div style="margin-top: 30px;">
+                        <h3 style="color: #333; font-size: 18px; margin-bottom: 15px;">Next Steps:</h3>
+                        <ul style="color: #666; line-height: 1.8;">
+                            <li>Log in to your driver dashboard</li>
+                            <li>Set your availability to "Available"</li>
+                            <li>Start accepting delivery orders</li>
+                            <li>Track your earnings in real-time</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: bold; display: inline-block;">
+                            Go to Dashboard
+                        </a>
+                    </div>
+                    
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                        <p style="color: #999; font-size: 13px; margin: 5px 0;">📱 Download our mobile app for better experience</p>
+                        <p style="color: #999; font-size: 13px; margin: 5px 0;">💰 Earn more with our referral program</p>
+                        <p style="color: #999; font-size: 13px; margin: 5px 0;">📞 Need help? Contact support@courier.com</p>
+                    </div>
+                </div>
+                <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">
+                    This is an automated email, please do not reply.
+                </p>
+            </div>
+        `;
+
+        if (this.transporter) {
+            try {
+                const info = await this.transporter.sendMail({
+                    from: '"Courier Platform" <no-reply@courier.com>',
+                    to,
+                    subject,
+                    html
+                });
+
+                console.log(`✅ Verification approval email sent to ${to}`);
+
+                // If using Ethereal, log the preview URL
+                const previewUrl = nodemailer.getTestMessageUrl(info);
+                if (previewUrl) {
+                    console.log('📬 ---------------------------------------------------');
+                    console.log(`📬 View Approval Email: ${previewUrl}`);
+                    console.log('📬 ---------------------------------------------------');
+                }
+            } catch (error) {
+                console.error('❌ Error sending verification approval email:', error.message);
+                this.logEmailToConsole(to, subject, `Driver ${driverName} approved`);
+            }
+        } else {
+            this.logEmailToConsole(to, subject, `Driver ${driverName} approved`);
+        }
+    }
+
     async sendWelcomeSMS(phone, name) {
         // In a real app, integrate with Twilio/SNS here
         const message = `Welcome ${name}! Thanks for joining our delivery network. Download the app to start earning.`;
