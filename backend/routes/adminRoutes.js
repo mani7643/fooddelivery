@@ -46,13 +46,20 @@ router.put('/verify-driver/:driverId', protect, authorize('admin'), async (req, 
 
         await driver.save();
 
-        // Send email if approved
+        // Send email notification
         if (status === 'verified') {
             await notificationService.sendVerificationApprovalEmail(
                 driver.userId.email,
                 driver.userId.name
             );
             console.log(`✅ Driver ${driver.userId.name} verified and email sent`);
+        } else if (status === 'rejected') {
+            await notificationService.sendVerificationRejectionEmail(
+                driver.userId.email,
+                driver.userId.name,
+                notes
+            );
+            console.log(`❌ Driver ${driver.userId.name} rejected and email sent`);
         }
 
         res.json({

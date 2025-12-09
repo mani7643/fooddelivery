@@ -252,6 +252,68 @@ class NotificationService {
         }
     }
 
+    async sendVerificationRejectionEmail(to, driverName, reason) {
+        const subject = 'Verification Update - Action Required';
+        const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f5f5f5;">
+                <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h2 style="color: #ef4444; text-align: center; margin-bottom: 20px;">⚠️ Verification Update</h2>
+                    <p style="color: #666; font-size: 16px;">Hello ${driverName},</p>
+                    <p style="color: #666; font-size: 16px;">We reviewed your documents, but unfortunately, we could not verify your account at this time.</p>
+                    
+                    <div style="background: rgba(239, 68, 68, 0.1); padding: 20px; border-radius: 8px; border-left: 4px solid #ef4444; margin: 30px 0;">
+                        <p style="color: #991b1b; font-size: 14px; font-weight: bold; margin: 0 0 5px 0;">Reason for rejection:</p>
+                        <p style="color: #991b1b; font-size: 16px; margin: 0;">${reason || 'Documents were unclear or invalid'}</p>
+                    </div>
+                    
+                    <div style="margin-top: 30px;">
+                        <h3 style="color: #333; font-size: 18px; margin-bottom: 15px;">What to do next:</h3>
+                        <p style="color: #666;">You can log in to your dashboard and re-upload the correct documents based on the feedback above.</p>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: bold; display: inline-block;">
+                            Login & Update Documents
+                        </a>
+                    </div>
+                    
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                        <p style="color: #999; font-size: 13px; margin: 5px 0;">📞 Need help? Contact support@courier.com</p>
+                    </div>
+                </div>
+                <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">
+                    This is an automated email, please do not reply.
+                </p>
+            </div>
+        `;
+
+        if (this.transporter) {
+            try {
+                const info = await this.transporter.sendMail({
+                    from: '"Courier Platform" <no-reply@courier.com>',
+                    to,
+                    subject,
+                    html
+                });
+
+                console.log(`✅ Verification rejection email sent to ${to}`);
+
+                // If using Ethereal, log the preview URL
+                const previewUrl = nodemailer.getTestMessageUrl(info);
+                if (previewUrl) {
+                    console.log('📬 ---------------------------------------------------');
+                    console.log(`📬 View Rejection Email: ${previewUrl}`);
+                    console.log('📬 ---------------------------------------------------');
+                }
+            } catch (error) {
+                console.error('❌ Error sending verification rejection email:', error.message);
+                this.logEmailToConsole(to, subject, `Driver ${driverName} rejected. Reason: ${reason}`);
+            }
+        } else {
+            this.logEmailToConsole(to, subject, `Driver ${driverName} rejected. Reason: ${reason}`);
+        }
+    }
+
     async sendWelcomeSMS(phone, name) {
         // In a real app, integrate with Twilio/SNS here
         const message = `Welcome ${name}! Thanks for joining our delivery network. Download the app to start earning.`;
