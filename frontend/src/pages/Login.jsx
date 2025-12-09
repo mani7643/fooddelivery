@@ -6,6 +6,7 @@ export default function Login() {
     const navigate = useNavigate();
     const { login } = useAuth();
     const [role, setRole] = useState('driver');
+    const [loginMethod, setLoginMethod] = useState('phone'); // 'email' or 'phone'
     const [formData, setFormData] = useState({
         emailOrPhone: '',
         password: ''
@@ -14,10 +15,26 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
 
     const handleChange = (e) => {
+        let value = e.target.value;
+
+        // Validation for Phone Number
+        if (loginMethod === 'phone' && e.target.name === 'emailOrPhone') {
+            // Allow only numbers
+            value = value.replace(/\D/g, '');
+            // Limit to 10 digits
+            if (value.length > 10) value = value.slice(0, 10);
+        }
+
         setFormData({
             ...formData,
-            [e.target.name]: e.target.value
+            [e.target.name]: value
         });
+    };
+
+    const handleMethodChange = (method) => {
+        setLoginMethod(method);
+        setFormData({ ...formData, emailOrPhone: '' });
+        setError('');
     };
 
     const handleSubmit = async (e) => {
@@ -123,6 +140,113 @@ export default function Login() {
                         </button>
                     </div>
 
+                    {/* Method Selection (Email vs Phone) */}
+                    <div style={{
+                        display: 'flex',
+                        gap: 'var(--space-4)',
+                        marginBottom: 'var(--space-6)',
+                        borderBottom: '1px solid var(--border-color)',
+                        paddingBottom: 'var(--space-2)'
+                    }}>
+                        <button
+                            type="button"
+                            onClick={() => handleMethodChange('phone')}
+                            style={{
+                                padding: 'var(--space-2) var(--space-4)',
+                                border: 'none',
+                                background: 'transparent',
+                                color: loginMethod === 'phone' ? 'var(--primary-500)' : 'var(--text-tertiary)',
+                                fontWeight: loginMethod === 'phone' ? 'bold' : 'normal',
+                                borderBottom: loginMethod === 'phone' ? '2px solid var(--primary-500)' : 'none',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            Phone Number
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleMethodChange('email')}
+                            style={{
+                                padding: 'var(--space-2) var(--space-4)',
+                                border: 'none',
+                                background: 'transparent',
+                                color: loginMethod === 'email' ? 'var(--primary-500)' : 'var(--text-tertiary)',
+                                fontWeight: loginMethod === 'email' ? 'bold' : 'normal',
+                                borderBottom: loginMethod === 'email' ? '2px solid var(--primary-500)' : 'none',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            Email Address
+                        </button>
+                    </div>
+
+                    {error && (
+                        <div style={{
+                            padding: 'var(--space-4)',
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            border: '1px solid var(--danger-500)',
+                            borderRadius: 'var(--radius-lg)',
+                            color: 'var(--danger-400)',
+                            marginBottom: 'var(--space-6)'
+                        }}>
+                            {error}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit}>
+                        <div style={{ marginBottom: 'var(--space-5)' }}>
+                            <label style={{
+                                display: 'block',
+                                marginBottom: 'var(--space-2)',
+                                fontSize: 'var(--font-size-sm)',
+                                fontWeight: 'var(--font-weight-medium)',
+                                color: 'var(--text-secondary)'
+                            }}>
+                                {loginMethod === 'phone' ? 'Mobile Number (10 digits)' : 'Email Address'}
+                            </label>
+                            {loginMethod === 'phone' ? (
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <span style={{
+                                        padding: 'var(--space-3)',
+                                        background: 'var(--bg-secondary)',
+                                        border: '1px solid var(--border-color)',
+                                        borderRight: 'none',
+                                        borderRadius: 'var(--radius-lg) 0 0 var(--radius-lg)',
+                                        color: 'var(--text-secondary)',
+                                        fontSize: 'var(--font-size-md)'
+                                    }}>
+                                        +91
+                                    </span>
+                                    <input
+                                        type="tel"
+                                        name="emailOrPhone"
+                                        value={formData.emailOrPhone}
+                                        onChange={handleChange}
+                                        className="input"
+                                        placeholder="9876543210"
+                                        style={{ borderRadius: '0 var(--radius-lg) var(--radius-lg) 0' }}
+                                        required
+                                    />
+                                </div>
+                            ) : (
+                                <input
+                                    type="email"
+                                    name="emailOrPhone"
+                                    value={formData.emailOrPhone}
+                                    onChange={handleChange}
+                                    className="input"
+                                    placeholder="admin@courier.com"
+                                    required
+                                />
+                            )}
+                        </div>
+
+                        <div style={{ marginBottom: 'var(--space-6)' }}>
+                            <label style={{
+                                display: 'block',
+                                marginBottom: 'var(--space-2)',
                                 fontSize: 'var(--font-size-sm)',
                                 fontWeight: 'var(--font-weight-medium)',
                                 color: 'var(--text-secondary)'
@@ -186,26 +310,25 @@ export default function Login() {
                             Sign up
                         </Link>
                     </div>
-                </div >
+                </div>
 
-        {/* Demo Credentials */ }
-        < div style = {{
-        marginTop: 'var(--space-6)',
-            padding: 'var(--space-4)',
-                background: 'var(--bg-secondary)',
+                {/* Demo Credentials */}
+                <div style={{
+                    marginTop: 'var(--space-6)',
+                    padding: 'var(--space-4)',
+                    background: 'var(--bg-secondary)',
                     borderRadius: 'var(--radius-lg)',
-                        border: '1px solid var(--border-color)'
-    }
-}>
-    <p style={{
-        fontSize: 'var(--font-size-sm)',
-        color: 'var(--text-tertiary)',
-        marginBottom: 'var(--space-2)'
-    }}>
-        💡 <strong>Demo Tip:</strong> Register as a Raider
-    </p>
-                </div >
-            </div >
-        </div >
+                    border: '1px solid var(--border-color)'
+                }}>
+                    <p style={{
+                        fontSize: 'var(--font-size-sm)',
+                        color: 'var(--text-tertiary)',
+                        marginBottom: 'var(--space-2)'
+                    }}>
+                        💡 <strong>Demo Tip:</strong> Register as a Raider
+                    </p>
+                </div>
+            </div>
+        </div>
     );
 }
