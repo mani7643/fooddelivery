@@ -47,7 +47,7 @@ function App() {
         <Routes>
             {/* Public Routes */}
             <Route path="/login" element={user ? <Navigate to={`/${user.role}`} replace /> : <Login />} />
-            <Route path="/register" element={user ? <Navigate to={`/${user.role}`} replace /> : <Register />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/resetpassword/:token" element={<ResetPassword />} />
             <Route path="/debug" element={<Debug />} />
