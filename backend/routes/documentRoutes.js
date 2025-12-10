@@ -55,9 +55,18 @@ router.post('/sign-url', protect, async (req, res) => {
 
         const bucketName = process.env.AWS_BUCKET_NAME;
 
+        // Guess mime type from extension
+        const ext = key.split('.').pop().toLowerCase();
+        let contentType = 'application/octet-stream';
+        if (['jpg', 'jpeg'].includes(ext)) contentType = 'image/jpeg';
+        else if (ext === 'png') contentType = 'image/png';
+        else if (ext === 'pdf') contentType = 'application/pdf';
+
         const command = new GetObjectCommand({
             Bucket: bucketName,
             Key: key,
+            ResponseContentDisposition: 'inline',
+            ResponseContentType: contentType
         });
 
         // Generate signed URL valid for 15 minutes (900 seconds)

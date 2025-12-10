@@ -38,7 +38,8 @@ const upload = multer({
             const ext = path.extname(file.originalname);
             const filename = `driver-documents/${req.user.id}/${file.fieldname}-${uniqueSuffix}${ext}`;
             cb(null, filename);
-        }
+        },
+        contentType: multerS3.AUTO_CONTENT_TYPE
     }),
     limits: {
         fileSize: 5 * 1024 * 1024 // 5MB limit
