@@ -166,3 +166,43 @@ jobs:
 
             # Restart containers
             sudo docker-compose up -d --remove-orphans
+
+  deploy-frontend-s3:
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Build Frontend
+        env:
+          VITE_API_URL: http://${{ secrets.EC2_HOST }}:8000/api
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          # Use OIDC/IAM Role if configured on runner, or secrets if provided
+          # Assuming secrets are used for GitHub Actions runners outside of AWS
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Deploy to S3
+        run: |
+          aws s3 sync ./frontend/dist s3://${{ secrets.AWS_FRONTEND_BUCKET_NAME }} --delete
