@@ -7,6 +7,13 @@ export default function AdminVerifications() {
     const navigate = useNavigate();
     const { logout } = useAuth();
     const [viewMode, setViewMode] = useState('verifications'); // 'verifications' or 'admins'
+
+    // Helper to handle both local uploads and S3 URLs
+    const getDocumentUrl = (path) => {
+        if (!path) return '';
+        if (path.startsWith('http')) return path;
+        return `${import.meta.env.VITE_API_URL.replace('/api', '')}${path}`;
+    };
     const [drivers, setDrivers] = useState([]);
     const [admins, setAdmins] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -455,10 +462,10 @@ export default function AdminVerifications() {
                                         <div>
                                             <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>Aadhaar Front</p>
                                             <img
-                                                src={selectedDriver.documents.aadhaarFront}
+                                                src={getDocumentUrl(selectedDriver.documents.aadhaarFront)}
                                                 alt="Aadhaar Front"
                                                 style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                onClick={() => window.open(`${import.meta.env.VITE_API_URL.replace('/api', '')}${selectedDriver.documents.aadhaarFront}`, '_blank')}
+                                                onClick={() => window.open(getDocumentUrl(selectedDriver.documents.aadhaarFront), '_blank')}
                                             />
                                         </div>
                                     )}
@@ -466,10 +473,10 @@ export default function AdminVerifications() {
                                         <div>
                                             <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>Aadhaar Back</p>
                                             <img
-                                                src={selectedDriver.documents.aadhaarBack}
+                                                src={getDocumentUrl(selectedDriver.documents.aadhaarBack)}
                                                 alt="Aadhaar Back"
                                                 style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                onClick={() => window.open(`${import.meta.env.VITE_API_URL.replace('/api', '')}${selectedDriver.documents.aadhaarBack}`, '_blank')}
+                                                onClick={() => window.open(getDocumentUrl(selectedDriver.documents.aadhaarBack), '_blank')}
                                             />
                                         </div>
                                     )}
@@ -477,10 +484,10 @@ export default function AdminVerifications() {
                                         <div>
                                             <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>DL Front</p>
                                             <img
-                                                src={selectedDriver.documents.dlFront}
+                                                src={getDocumentUrl(selectedDriver.documents.dlFront)}
                                                 alt="DL Front"
                                                 style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                onClick={() => window.open(`${import.meta.env.VITE_API_URL.replace('/api', '')}${selectedDriver.documents.dlFront}`, '_blank')}
+                                                onClick={() => window.open(getDocumentUrl(selectedDriver.documents.dlFront), '_blank')}
                                             />
                                         </div>
                                     )}
@@ -488,10 +495,10 @@ export default function AdminVerifications() {
                                         <div>
                                             <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>DL Back</p>
                                             <img
-                                                src={selectedDriver.documents.dlBack}
+                                                src={getDocumentUrl(selectedDriver.documents.dlBack)}
                                                 alt="DL Back"
                                                 style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                onClick={() => window.open(`${import.meta.env.VITE_API_URL.replace('/api', '')}${selectedDriver.documents.dlBack}`, '_blank')}
+                                                onClick={() => window.open(getDocumentUrl(selectedDriver.documents.dlBack), '_blank')}
                                             />
                                         </div>
                                     )}
@@ -499,10 +506,10 @@ export default function AdminVerifications() {
                                         <div>
                                             <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>PAN Card</p>
                                             <img
-                                                src={selectedDriver.documents.panCard}
+                                                src={getDocumentUrl(selectedDriver.documents.panCard)}
                                                 alt="PAN Card"
                                                 style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                onClick={() => window.open(`${import.meta.env.VITE_API_URL.replace('/api', '')}${selectedDriver.documents.panCard}`, '_blank')}
+                                                onClick={() => window.open(getDocumentUrl(selectedDriver.documents.panCard), '_blank')}
                                             />
                                         </div>
                                     )}
