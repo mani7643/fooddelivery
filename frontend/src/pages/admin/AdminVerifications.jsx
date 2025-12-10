@@ -3,6 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { initiateSocketConnection, disconnectSocket, subscribeToDriverUpdates, joinAdminRoom } from '../../services/socket';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Fix Leaflet default icon issue
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+let DefaultIcon = L.icon({
+    iconUrl: icon,
+    shadowUrl: iconShadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41]
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
 
 export default function AdminVerifications() {
     const navigate = useNavigate();
@@ -503,8 +519,8 @@ export default function AdminVerifications() {
                     </div>
                 ) : (
                     <>
-                        {/* DRIVER VERIFICATIONS LIST & VERIFIED LIST & REJECTED LIST & ONLINE LIST */}
-                        {(viewMode === 'verifications' || viewMode === 'verified' || viewMode === 'rejected' || viewMode === 'online') && (
+                        {/* DRIVER VERIFICATIONS LIST & VERIFIED LIST & REJECTED LIST */}
+                        {(viewMode === 'verifications' || viewMode === 'verified' || viewMode === 'rejected') && (
                             drivers.length === 0 ? (
                                 <div className="glass" style={{
                                     padding: 'var(--space-12)',
@@ -574,6 +590,71 @@ export default function AdminVerifications() {
                                     ))}
                                 </div>
                             )
+                        )}
+
+
+
+                        {/* ONLINE DRIVERS MAP VIEW */}
+                        {viewMode === 'online' && (
+                            <div style={{ height: '600px', width: '100%', borderRadius: 'var(--radius-xl)', overflow: 'hidden', marginTop: 'var(--space-4)', position: 'relative', zIndex: 0 }}>
+                                {drivers.length > 0 ? (
+                                    <MapContainer
+                                        center={[drivers[0].currentLocation.coordinates[1], drivers[0].currentLocation.coordinates[0]]}
+                                        zoom={13}
+                                        style={{ height: '100%', width: '100%' }}
+                                    >
+                                        <TileLayer
+                                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                        />
+                                        {drivers.map(driver => (
+                                            driver.currentLocation && driver.currentLocation.coordinates && (
+                                                <Marker
+                                                    key={driver._id}
+                                                    position={[driver.currentLocation.coordinates[1], driver.currentLocation.coordinates[0]]}
+                                                >
+                                                    <Popup>
+                                                        <div style={{ minWidth: '200px' }}>
+                                                            <h3 style={{ margin: '0 0 5px 0', fontSize: '16px', fontWeight: 'bold' }}>{driver.userId?.name || driver.name}</h3>
+                                                            <p style={{ margin: '0 0 5px 0' }}>🚗 {driver.vehicleType} - {driver.vehicleNumber}</p>
+                                                            <p style={{ margin: '0', fontSize: '12px', color: '#666' }}>
+                                                                Status: <span style={{ color: '#10b981', fontWeight: 'bold' }}>Online</span>
+                                                            </p>
+                                                            <a
+                                                                href={`https://www.google.com/maps?q=${driver.currentLocation.coordinates[1]},${driver.currentLocation.coordinates[0]}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                style={{ display: 'block', marginTop: '5px', color: '#3b82f6', fontSize: '12px' }}
+                                                            >
+                                                                Open in Google Maps ↗️
+                                                            </a>
+                                                        </div>
+                                                    </Popup>
+                                                </Marker>
+                                            )
+                                        ))}
+                                    </MapContainer>
+                                ) : (
+                                    <div className="glass" style={{
+                                        position: 'absolute',
+                                        top: '50%',
+                                        left: '50%',
+                                        transform: 'translate(-50%, -50%)',
+                                        padding: 'var(--space-8)',
+                                        textAlign: 'center',
+                                        width: '100%',
+                                        height: '100%',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}>
+                                        <div style={{ fontSize: '48px', marginBottom: 'var(--space-4)' }}>🌍</div>
+                                        <h3>No Online Drivers</h3>
+                                        <p style={{ color: 'var(--text-secondary)' }}>Waiting for drivers to go online...</p>
+                                    </div>
+                                )}
+                            </div>
                         )}
 
                         {/* PENDING ADMINS LIST */}
