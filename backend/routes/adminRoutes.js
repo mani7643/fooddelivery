@@ -3,6 +3,7 @@ import { protect, authorize } from '../middleware/authMiddleware.js';
 import Driver from '../models/Driver.js';
 import User from '../models/User.js';
 import notificationService from '../services/notificationService.js';
+import { fileURLToPath } from 'url';
 
 const router = express.Router();
 
@@ -143,6 +144,45 @@ router.put('/approve-admin/:userId', protect, authorize('admin'), async (req, re
     } catch (error) {
         console.error('Approve admin error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// @route   GET /api/admin/debug-files
+// @desc    Debug endpoint to list files in uploads directory
+// @access  Public (Temporary for debugging) - verify it is protected in prod
+router.get('/debug-files', async (req, res) => {
+    try {
+        const fs = await import('fs');
+        const path = await import('path');
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = path.dirname(__filename);
+        // Navigate from routes/adminRoutes.js to backend/uploads
+        const uploadsDir = path.join(__dirname, '../uploads');
+
+        if (!fs.existsSync(uploadsDir)) {
+            return res.json({ message: 'Uploads directory does not exist', path: uploadsDir });
+        }
+
+        const getFiles = (dir) => {
+            const dirents = fs.readdirSync(dir, { withFileTypes: true });
+            const files = dirents.map((dirent) => {
+                const res = path.resolve(dir, dirent.name);
+                return dirent.isDirectory() ? getFiles(res) : res;
+            });
+            return Array.prototype.concat(...files);
+        };
+
+        const files = getFiles(uploadsDir);
+        // Clean paths to be relative to uploads
+        const relativeFiles = files.map(f => f.split('uploads')[1]);
+
+        res.json({
+            message: 'List of files in uploads',
+            uploadPath: uploadsDir,
+            files: relativeFiles
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
