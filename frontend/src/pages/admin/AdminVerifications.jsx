@@ -594,13 +594,64 @@ export default function AdminVerifications() {
 
 
 
-                        {/* ONLINE DRIVERS MAP VIEW */}
+                        {/* ONLINE DRIVERS SPLIT VIEW */}
                         {viewMode === 'online' && (
-                            <div style={{ height: '600px', width: '100%', borderRadius: 'var(--radius-xl)', overflow: 'hidden', marginTop: 'var(--space-4)', position: 'relative', zIndex: 0 }}>
-                                {drivers.length > 0 ? (
+                            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 2fr', gap: 'var(--space-4)', marginTop: 'var(--space-4)', height: 'calc(100vh - 200px)', minHeight: '600px' }}>
+                                {/* Left Side: Driver List */}
+                                <div className="glass" style={{
+                                    borderRadius: 'var(--radius-xl)',
+                                    overflowY: 'auto',
+                                    padding: 'var(--space-4)',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: 'var(--space-4)'
+                                }}>
+                                    <h3 style={{ fontSize: '1.1rem', fontWeight: '600', position: 'sticky', top: 0, background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(10px)', zIndex: 10, paddingBottom: '10px', borderBottom: '1px solid var(--border-color)' }}>
+                                        Active Drivers ({drivers.length})
+                                    </h3>
+                                    {drivers.length === 0 ? (
+                                        <div style={{ textAlign: 'center', padding: 'var(--space-8)', color: 'var(--text-secondary)' }}>
+                                            <div style={{ fontSize: '32px', marginBottom: '8px' }}>😴</div>
+                                            <p>No drivers online</p>
+                                        </div>
+                                    ) : (
+                                        drivers.map(driver => (
+                                            <div
+                                                key={driver._id}
+                                                style={{
+                                                    padding: 'var(--space-4)',
+                                                    background: 'var(--bg-secondary)',
+                                                    borderRadius: 'var(--radius-lg)',
+                                                    cursor: 'pointer',
+                                                    border: '1px solid transparent',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                                onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--primary-500)'}
+                                                onMouseLeave={(e) => e.currentTarget.style.borderColor = 'transparent'}
+                                            >
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                                    <span style={{ fontWeight: '600' }}>{driver.userId?.name || driver.name}</span>
+                                                    <span style={{ fontSize: '0.7rem', color: '#10b981', background: '#d1fae5', padding: '2px 6px', borderRadius: '10px' }}>Online</span>
+                                                </div>
+                                                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                                    <div>🚗 {driver.vehicleType} - {driver.vehicleNumber}</div>
+                                                    <div>📞 {driver.userId?.phone || driver.phone}</div>
+                                                </div>
+                                                {driver.currentLocation?.coordinates && (
+                                                    <div style={{ marginTop: '6px', fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                                                        Lat: {driver.currentLocation.coordinates[1].toFixed(4)}, Lng: {driver.currentLocation.coordinates[0].toFixed(4)}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+
+                                {/* Right Side: Map */}
+                                <div style={{ borderRadius: 'var(--radius-xl)', overflow: 'hidden', position: 'relative', zIndex: 0, border: '1px solid var(--border-color)' }}>
                                     <MapContainer
-                                        center={[drivers[0].currentLocation.coordinates[1], drivers[0].currentLocation.coordinates[0]]}
-                                        zoom={13}
+                                        center={[20.5937, 78.9629]}
+                                        zoom={5}
                                         style={{ height: '100%', width: '100%' }}
                                     >
                                         <TileLayer
@@ -608,7 +659,8 @@ export default function AdminVerifications() {
                                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                         />
                                         {drivers.map(driver => (
-                                            driver.currentLocation && driver.currentLocation.coordinates && (
+                                            driver.currentLocation?.coordinates &&
+                                            (driver.currentLocation.coordinates[1] !== 0 || driver.currentLocation.coordinates[0] !== 0) && (
                                                 <Marker
                                                     key={driver._id}
                                                     position={[driver.currentLocation.coordinates[1], driver.currentLocation.coordinates[0]]}
@@ -617,43 +669,16 @@ export default function AdminVerifications() {
                                                         <div style={{ minWidth: '200px' }}>
                                                             <h3 style={{ margin: '0 0 5px 0', fontSize: '16px', fontWeight: 'bold' }}>{driver.userId?.name || driver.name}</h3>
                                                             <p style={{ margin: '0 0 5px 0' }}>🚗 {driver.vehicleType} - {driver.vehicleNumber}</p>
-                                                            <p style={{ margin: '0', fontSize: '12px', color: '#666' }}>
-                                                                Status: <span style={{ color: '#10b981', fontWeight: 'bold' }}>Online</span>
-                                                            </p>
-                                                            <a
-                                                                href={`https://www.google.com/maps?q=${driver.currentLocation.coordinates[1]},${driver.currentLocation.coordinates[0]}`}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                style={{ display: 'block', marginTop: '5px', color: '#3b82f6', fontSize: '12px' }}
-                                                            >
-                                                                Open in Google Maps ↗️
-                                                            </a>
+                                                            <div style={{ marginTop: '5px', fontSize: '12px', color: '#666' }}>
+                                                                {driver.currentLocation.coordinates[1].toFixed(5)}, {driver.currentLocation.coordinates[0].toFixed(5)}
+                                                            </div>
                                                         </div>
                                                     </Popup>
                                                 </Marker>
                                             )
                                         ))}
                                     </MapContainer>
-                                ) : (
-                                    <div className="glass" style={{
-                                        position: 'absolute',
-                                        top: '50%',
-                                        left: '50%',
-                                        transform: 'translate(-50%, -50%)',
-                                        padding: 'var(--space-8)',
-                                        textAlign: 'center',
-                                        width: '100%',
-                                        height: '100%',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}>
-                                        <div style={{ fontSize: '48px', marginBottom: 'var(--space-4)' }}>🌍</div>
-                                        <h3>No Online Drivers</h3>
-                                        <p style={{ color: 'var(--text-secondary)' }}>Waiting for drivers to go online...</p>
-                                    </div>
-                                )}
+                                </div>
                             </div>
                         )}
 

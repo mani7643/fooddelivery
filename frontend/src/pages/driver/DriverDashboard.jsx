@@ -83,14 +83,18 @@ export default function DriverDashboard() {
                     (position) => {
                         const { latitude, longitude } = position.coords;
 
-                        // Emit location update to server
+                        // Emit location update to server (Send GeoJSON to match Admin expectations)
                         socket.emit('updateLocation', {
                             driverId: driver._id,
-                            location: { latitude, longitude }
+                            location: {
+                                type: 'Point',
+                                coordinates: [longitude, latitude]
+                            }
                         });
 
-                        // Also persist to DB via API (optional but good for initial state)
-                        driverService.updateLocation({ latitude, longitude }).catch(err =>
+                        // Also persist to DB via API
+                        // Fix: driverService.updateLocation expects (lat, lng), not an object
+                        driverService.updateLocation(latitude, longitude).catch(err =>
                             console.error('Error persisting location:', err)
                         );
                     },
