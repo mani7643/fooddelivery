@@ -551,9 +551,14 @@ export default function AdminVerifications() {
                                                     <p>📱 {driver.userId?.phone || driver.phone}</p>
                                                     <p>🚗 {driver.vehicleType} - {driver.vehicleNumber}</p>
                                                     {viewMode === 'online' && driver.currentLocation?.coordinates && (
-                                                        <p style={{ marginTop: '4px', fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                                                            📍 Location: {driver.currentLocation.coordinates[1].toFixed(4)}, {driver.currentLocation.coordinates[0].toFixed(4)}
-                                                        </p>
+                                                        <a
+                                                            href={`https://www.google.com/maps?q=${driver.currentLocation.coordinates[1]},${driver.currentLocation.coordinates[0]}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            style={{ marginTop: '4px', fontSize: '0.75rem', color: 'var(--primary-500)', display: 'block', textDecoration: 'underline' }}
+                                                        >
+                                                            📍 Location: {driver.currentLocation.coordinates[1].toFixed(4)}, {driver.currentLocation.coordinates[0].toFixed(4)} ↗️
+                                                        </a>
                                                     )}
                                                 </div>
                                             </div>
