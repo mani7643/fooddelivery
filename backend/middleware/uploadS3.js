@@ -33,10 +33,13 @@ const upload = multer({
             cb(null, { fieldName: file.fieldname });
         },
         key: function (req, file, cb) {
-            // Path: driver-documents/{userId}/{filename}
+            // Path: driver-documents/{FirstName_LastName}/{filename}
+            // Sanitizing name: replace spaces with underscores, remove special chars
+            const sanitizedName = (req.user.name || 'unknown_driver').replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/\s+/g, '_');
+
             const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
             const ext = path.extname(file.originalname);
-            const filename = `driver-documents/${req.user.id}/${file.fieldname}-${uniqueSuffix}${ext}`;
+            const filename = `driver-documents/${sanitizedName}/${file.fieldname}-${uniqueSuffix}${ext}`;
             cb(null, filename);
         },
         contentType: multerS3.AUTO_CONTENT_TYPE
