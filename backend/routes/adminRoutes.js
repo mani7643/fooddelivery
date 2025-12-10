@@ -186,4 +186,43 @@ router.get('/debug-files', async (req, res) => {
     }
 });
 
+// @route   GET /api/admin/debug-s3
+// @desc    Debug S3 connectivity and permission
+// @access  Public (Temporary for debugging) - verify it is protected in prod
+import { s3 } from '../middleware/uploadS3.js';
+import { ListObjectsCommand } from '@aws-sdk/client-s3';
+
+router.get('/debug-s3', async (req, res) => {
+    try {
+        const bucketName = process.env.AWS_BUCKET_NAME;
+        if (!bucketName) {
+            return res.status(500).json({ message: 'AWS_BUCKET_NAME is not defined in env' });
+        }
+
+        const command = new ListObjectsCommand({
+            Bucket: bucketName,
+            MaxKeys: 1
+        });
+
+        const response = await s3.send(command);
+
+        res.json({
+            success: true,
+            message: 'Successfully connected to S3',
+            bucket: bucketName,
+            region: process.env.AWS_REGION,
+            data: response
+        });
+    } catch (error) {
+        console.error('S3 Debug Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to connect to S3',
+            error: error.message,
+            code: error.code,
+            requestId: error.$metadata?.requestId
+        });
+    }
+});
+
 export default router;

@@ -55,4 +55,5 @@ export const uploadDocumentsS3 = upload.fields([
     { name: 'panCard', maxCount: 1 }
 ]);
 
+export { s3 };
 export default upload;
