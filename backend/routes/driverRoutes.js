@@ -59,7 +59,7 @@ router.put('/location', protect, authorize('driver'), async (req, res) => {
             {
                 currentLocation: {
                     type: 'Point',
-                    coordinates: [longitude, latitude]
+                    coordinates: [parseFloat(longitude), parseFloat(latitude)]
                 }
             },
             { new: true }

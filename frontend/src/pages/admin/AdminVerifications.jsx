@@ -550,12 +550,13 @@ export default function AdminVerifications() {
                                                     <p>📧 {driver.userId?.email}</p>
                                                     <p>📱 {driver.userId?.phone || driver.phone}</p>
                                                     <p>🚗 {driver.vehicleType} - {driver.vehicleNumber}</p>
-                                                    {viewMode === 'online' && driver.currentLocation?.coordinates && (
+                                                    {viewMode === 'online' && driver.currentLocation?.coordinates && (driver.currentLocation.coordinates[0] !== 0 || driver.currentLocation.coordinates[1] !== 0) && (
                                                         <a
                                                             href={`https://www.google.com/maps?q=${driver.currentLocation.coordinates[1]},${driver.currentLocation.coordinates[0]}`}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             style={{ marginTop: '4px', fontSize: '0.75rem', color: 'var(--primary-500)', display: 'block', textDecoration: 'underline' }}
+                                                            title={`Lat: ${driver.currentLocation.coordinates[1]}, Lng: ${driver.currentLocation.coordinates[0]}`}
                                                         >
                                                             📍 Location: {driver.currentLocation.coordinates[1].toFixed(4)}, {driver.currentLocation.coordinates[0].toFixed(4)} ↗️
                                                         </a>
