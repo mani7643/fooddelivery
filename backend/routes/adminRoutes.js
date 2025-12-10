@@ -30,8 +30,8 @@ router.put('/verify-driver/:driverId', protect, authorize('admin'), async (req, 
     try {
         const { status, notes } = req.body;
 
-        if (!['verified', 'rejected'].includes(status)) {
-            return res.status(400).json({ message: 'Invalid status. Must be "verified" or "rejected"' });
+        if (!['verified', 'rejected', 'pending_verification'].includes(status)) {
+            return res.status(400).json({ message: 'Invalid status. Must be "verified", "rejected" or "pending_verification"' });
         }
 
         const driver = await Driver.findById(req.params.driverId).populate('userId', 'name email');
@@ -74,13 +74,62 @@ router.put('/verify-driver/:driverId', protect, authorize('admin'), async (req, 
     }
 });
 
+// @route   GET /api/admin/stats
+// @desc    Get dashboard statistics
+// @access  Private (Admin only)
+router.get('/stats', protect, authorize('admin'), async (req, res) => {
+    try {
+        const totalUsers = await User.countDocuments();
+        const totalDrivers = await Driver.countDocuments();
+        const pendingVerification = await Driver.countDocuments({ verificationStatus: 'pending_verification' });
+        const verifiedDrivers = await Driver.countDocuments({ verificationStatus: 'verified' });
+        const rejectedDrivers = await Driver.countDocuments({ verificationStatus: 'rejected' });
+
+        res.json({
+            success: true,
+            stats: {
+                totalUsers,
+                totalDrivers,
+                pendingVerification,
+                verifiedDrivers,
+                rejectedDrivers
+            }
+        });
+    } catch (error) {
+        console.error('Get stats error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
 // @route   GET /api/admin/drivers
-// @desc    Get all drivers with filters
+// @desc    Get all drivers with filters (status, search)
 // @access  Private (Admin only)
 router.get('/drivers', protect, authorize('admin'), async (req, res) => {
     try {
-        const { status } = req.query;
-        const filter = status ? { verificationStatus: status } : {};
+        const { status, search } = req.query;
+        let filter = {};
+
+        // Status Filter
+        if (status) {
+            filter.verificationStatus = status;
+        }
+
+        // Search Filter
+        if (search) {
+            // Find users matching name, email, or phone
+            const userQuery = {
+                $or: [
+                    { name: { $regex: search, $options: 'i' } },
+                    { email: { $regex: search, $options: 'i' } },
+                    { phone: { $regex: search, $options: 'i' } }
+                ]
+            };
+            const matchingUsers = await User.find(userQuery).select('_id');
+            const matchingUserIds = matchingUsers.map(user => user._id);
+
+            // Add userId filter to driver query
+            filter.userId = { $in: matchingUserIds };
+        }
 
         const drivers = await Driver.find(filter)
             .populate('userId', 'name email phone')
