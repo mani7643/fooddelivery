@@ -153,6 +153,9 @@ jobs:
             echo "EMAIL_SERVICE=${{ secrets.EMAIL_SERVICE }}" >> .env
             echo "EMAIL_USER=${{ secrets.EMAIL_USER }}" >> .env
             echo "EMAIL_PASS=${{ secrets.EMAIL_PASS }}" >> .env
+            # AWS Configuration (Role-based auth)
+            echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env
+            echo "AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}" >> .env
             # Add other secrets as needed e.g., EMAIL_USER, etc.
 
             # Login to GHCR on EC2 (as root/sudo to ensure docker access)

@@ -1,6 +1,6 @@
+import 'dotenv/config'; // Load env vars immediately
 import express from 'express';
 import mongoose from 'mongoose';
-import dotenv from 'dotenv';
 import cors from 'cors';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -21,8 +21,8 @@ import socketHandler from './socket/socketHandler.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables
-dotenv.config();
+// Load environment variables (already loaded at top)
+// dotenv.config();
 
 // Initialize Express app
 const app = express();

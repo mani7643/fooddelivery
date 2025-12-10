@@ -3,7 +3,7 @@ import { protect, authorize } from '../middleware/authMiddleware.js';
 import Driver from '../models/Driver.js';
 import Order from '../models/Order.js';
 import User from '../models/User.js';
-import { uploadDocuments } from '../middleware/upload.js';
+// import { uploadDocuments } from '../middleware/upload.js'; // Removed in favor of S3
 
 const router = express.Router();
 
@@ -227,7 +227,14 @@ router.get('/earnings', protect, authorize('driver'), async (req, res) => {
 // @route   POST /api/driver/upload-documents
 // @desc    Upload driver verification documents
 // @access  Private (Driver only)
-router.post('/upload-documents', protect, authorize('driver'), uploadDocuments, async (req, res) => {
+import { uploadDocumentsS3 } from '../middleware/uploadS3.js';
+
+// ... (imports)
+
+// @route   POST /api/driver/upload-documents
+// @desc    Upload driver verification documents
+// @access  Private (Driver only)
+router.post('/upload-documents', protect, authorize('driver'), uploadDocumentsS3, async (req, res) => {
     try {
         // Find driver profile
         const driver = await Driver.findOne({ userId: req.user._id });
@@ -235,23 +242,24 @@ router.post('/upload-documents', protect, authorize('driver'), uploadDocuments, 
             return res.status(404).json({ message: 'Driver profile not found' });
         }
 
-        // Build document URLs from uploaded files
+        // Build document URLs from uploaded files (S3 URLs)
         const documentUrls = {};
 
         if (req.files.aadhaarFront) {
-            documentUrls.aadhaarFront = `/uploads/documents/${req.files.aadhaarFront[0].filename}`;
+            documentUrls.aadhaarFront = req.files.aadhaarFront[0].location;
+            console.log('Aadhaar Front URL:', documentUrls.aadhaarFront);
         }
         if (req.files.aadhaarBack) {
-            documentUrls.aadhaarBack = `/uploads/documents/${req.files.aadhaarBack[0].filename}`;
+            documentUrls.aadhaarBack = req.files.aadhaarBack[0].location;
         }
         if (req.files.dlFront) {
-            documentUrls.dlFront = `/uploads/documents/${req.files.dlFront[0].filename}`;
+            documentUrls.dlFront = req.files.dlFront[0].location;
         }
         if (req.files.dlBack) {
-            documentUrls.dlBack = `/uploads/documents/${req.files.dlBack[0].filename}`;
+            documentUrls.dlBack = req.files.dlBack[0].location;
         }
         if (req.files.panCard) {
-            documentUrls.panCard = `/uploads/documents/${req.files.panCard[0].filename}`;
+            documentUrls.panCard = req.files.panCard[0].location;
         }
 
         // Update driver documents
