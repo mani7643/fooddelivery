@@ -18,6 +18,8 @@ export default function AdminVerifications() {
     useEffect(() => {
         if (viewMode === 'verifications') {
             fetchPendingDrivers();
+        } else if (viewMode === 'verified') {
+            fetchVerifiedDrivers();
         } else {
             fetchPendingAdmins();
         }
@@ -30,6 +32,18 @@ export default function AdminVerifications() {
             setDrivers(response.data.drivers);
         } catch (error) {
             console.error('Error fetching drivers:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchVerifiedDrivers = async () => {
+        setLoading(true);
+        try {
+            const response = await api.get('/admin/drivers?status=verified');
+            setDrivers(response.data.drivers);
+        } catch (error) {
+            console.error('Error fetching verified drivers:', error);
         } finally {
             setLoading(false);
         }
@@ -186,7 +200,7 @@ export default function AdminVerifications() {
                         }}
                     >
                         Pending Drivers
-                        {drivers.length > 0 && (
+                        {drivers.length > 0 && viewMode === 'verifications' && (
                             <span style={{
                                 background: 'var(--primary-500)',
                                 color: 'white',
@@ -195,6 +209,22 @@ export default function AdminVerifications() {
                                 fontSize: '0.75rem'
                             }}>{drivers.length}</span>
                         )}
+                    </button>
+                    <button
+                        onClick={() => setViewMode('verified')}
+                        style={{
+                            padding: 'var(--space-3) var(--space-6)',
+                            borderRadius: 'var(--radius-md)',
+                            border: 'none',
+                            background: viewMode === 'verified' ? 'var(--surface-raised)' : 'transparent',
+                            color: viewMode === 'verified' ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                            fontWeight: 'var(--font-weight-medium)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            gap: 'var(--space-2)'
+                        }}
+                    >
+                        Verified Drivers
                     </button>
                     <button
                         onClick={() => setViewMode('admins')}
@@ -235,20 +265,22 @@ export default function AdminVerifications() {
                     </div>
                 ) : (
                     <>
-                        {/* DRIVER VERIFICATIONS LIST */}
-                        {viewMode === 'verifications' && (
+                        {/* DRIVER VERIFICATIONS LIST & VERIFIED LIST */}
+                        {(viewMode === 'verifications' || viewMode === 'verified') && (
                             drivers.length === 0 ? (
                                 <div className="glass" style={{
                                     padding: 'var(--space-12)',
                                     borderRadius: 'var(--radius-2xl)',
                                     textAlign: 'center'
                                 }}>
-                                    <div style={{ fontSize: '64px', marginBottom: 'var(--space-4)' }}>✅</div>
+                                    <div style={{ fontSize: '64px', marginBottom: 'var(--space-4)' }}>
+                                        {viewMode === 'verifications' ? '✅' : '📂'}
+                                    </div>
                                     <h3 style={{ fontSize: 'var(--font-size-xl)', marginBottom: 'var(--space-2)' }}>
-                                        All Drivers Verified!
+                                        {viewMode === 'verifications' ? 'All Drivers Verified!' : 'No Verified Drivers Found'}
                                     </h3>
                                     <p style={{ color: 'var(--text-secondary)' }}>
-                                        No pending driver verifications at the moment.
+                                        {viewMode === 'verifications' ? 'No pending driver verifications at the moment.' : 'No drivers have been verified yet.'}
                                     </p>
                                 </div>
                             ) : (
@@ -272,6 +304,7 @@ export default function AdminVerifications() {
                                                     marginBottom: 'var(--space-2)'
                                                 }}>
                                                     {driver.userId?.name || driver.name}
+                                                    {viewMode === 'verified' && <span style={{ marginLeft: '10px', fontSize: '0.8rem', color: 'green' }}>✓ Verified</span>}
                                                 </h3>
                                                 <div style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-sm)' }}>
                                                     <p>📧 {driver.userId?.email}</p>
@@ -284,7 +317,7 @@ export default function AdminVerifications() {
                                                 className="btn btn-primary"
                                                 style={{ padding: 'var(--space-3) var(--space-6)' }}
                                             >
-                                                Review Documents
+                                                {viewMode === 'verified' ? 'View Documents' : 'Review Documents'}
                                             </button>
                                         </div>
                                     ))}
@@ -498,44 +531,49 @@ export default function AdminVerifications() {
 
                             {/* Actions */}
                             <div style={{ display: 'flex', gap: 'var(--space-4)' }}>
-                                <button
-                                    onClick={handleApprove}
-                                    disabled={actionLoading}
-                                    style={{
-                                        flex: 1,
-                                        padding: 'var(--space-4)',
-                                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: 'var(--radius-lg)',
-                                        fontWeight: 'var(--font-weight-semibold)',
-                                        cursor: actionLoading ? 'not-allowed' : 'pointer',
-                                        opacity: actionLoading ? 0.6 : 1
-                                    }}
-                                >
-                                    {actionLoading ? 'Processing...' : '✓ Approve'}
-                                </button>
-                                <button
-                                    onClick={handleReject}
-                                    disabled={actionLoading}
-                                    style={{
-                                        flex: 1,
-                                        padding: 'var(--space-4)',
-                                        background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: 'var(--radius-lg)',
-                                        fontWeight: 'var(--font-weight-semibold)',
-                                        cursor: actionLoading ? 'not-allowed' : 'pointer',
-                                        opacity: actionLoading ? 0.6 : 1
-                                    }}
-                                >
-                                    {actionLoading ? 'Processing...' : '✗ Reject'}
-                                </button>
+                                {selectedDriver.verificationStatus !== 'verified' && (
+                                    <>
+                                        <button
+                                            onClick={handleApprove}
+                                            disabled={actionLoading}
+                                            style={{
+                                                flex: 1,
+                                                padding: 'var(--space-4)',
+                                                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: 'var(--radius-lg)',
+                                                fontWeight: 'var(--font-weight-semibold)',
+                                                cursor: actionLoading ? 'not-allowed' : 'pointer',
+                                                opacity: actionLoading ? 0.6 : 1
+                                            }}
+                                        >
+                                            {actionLoading ? 'Processing...' : '✓ Approve'}
+                                        </button>
+                                        <button
+                                            onClick={handleReject}
+                                            disabled={actionLoading}
+                                            style={{
+                                                flex: 1,
+                                                padding: 'var(--space-4)',
+                                                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: 'var(--radius-lg)',
+                                                fontWeight: 'var(--font-weight-semibold)',
+                                                cursor: actionLoading ? 'not-allowed' : 'pointer',
+                                                opacity: actionLoading ? 0.6 : 1
+                                            }}
+                                        >
+                                            {actionLoading ? 'Processing...' : '✗ Reject'}
+                                        </button>
+                                    </>
+                                )}
                                 <button
                                     onClick={() => setShowModal(false)}
                                     disabled={actionLoading}
                                     style={{
+                                        flex: selectedDriver.verificationStatus === 'verified' ? 1 : 0,
                                         padding: 'var(--space-4) var(--space-6)',
                                         background: 'var(--bg-tertiary)',
                                         color: 'var(--text-secondary)',
@@ -545,7 +583,7 @@ export default function AdminVerifications() {
                                         cursor: actionLoading ? 'not-allowed' : 'pointer'
                                     }}
                                 >
-                                    Cancel
+                                    {selectedDriver.verificationStatus === 'verified' ? 'Close' : 'Cancel'}
                                 </button>
                             </div>
                         </div>
