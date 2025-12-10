@@ -194,15 +194,30 @@ jobs:
           cd frontend
           npm run build
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
+      - name: Copy build to EC2
+        uses: appleboy/scp-action@master
         with:
-          aws-region: ${{ secrets.AWS_REGION }}
-          # Use OIDC/IAM Role if configured on runner, or secrets if provided
-          # Assuming secrets are used for GitHub Actions runners outside of AWS
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "frontend/dist"
+          target: "/home/${{ secrets.EC2_USER }}/frontend-deploy-temp"
 
-      - name: Deploy to S3
-        run: |
-          aws s3 sync ./frontend/dist s3://${{ secrets.AWS_FRONTEND_BUCKET_NAME }} --delete
+      - name: Deploy to S3 via EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Ensure AWS CLI is installed
+            if ! command -v aws &> /dev/null; then
+              sudo yum install -y aws-cli || sudo apt-get install -y awscli
+            fi
+
+            # Sync to S3 using EC2's IAM Role
+            # Note: scp-action preserves structure, so path is .../frontend-deploy-temp/frontend/dist
+            aws s3 sync /home/${{ secrets.EC2_USER }}/frontend-deploy-temp/frontend/dist s3://${{ secrets.AWS_FRONTEND_BUCKET_NAME }} --delete
+
+            # Cleanup
+            rm -rf /home/${{ secrets.EC2_USER }}/frontend-deploy-temp
