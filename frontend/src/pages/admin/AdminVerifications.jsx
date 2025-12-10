@@ -594,9 +594,10 @@ export default function AdminVerifications() {
 
 
 
-                        {/* ONLINE DRIVERS SPLIT VIEW */}
                         {viewMode === 'online' && (
                             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 2fr', gap: 'var(--space-4)', marginTop: 'var(--space-4)', height: 'calc(100vh - 200px)', minHeight: '600px' }}>
+                                {/* Debug Log */}
+                                {console.log('Online Drivers Render:', drivers)}
                                 {/* Left Side: Driver List */}
                                 <div className="glass" style={{
                                     borderRadius: 'var(--radius-xl)',
@@ -606,8 +607,31 @@ export default function AdminVerifications() {
                                     flexDirection: 'column',
                                     gap: 'var(--space-4)'
                                 }}>
-                                    <h3 style={{ fontSize: '1.1rem', fontWeight: '600', position: 'sticky', top: 0, background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(10px)', zIndex: 10, paddingBottom: '10px', borderBottom: '1px solid var(--border-color)' }}>
-                                        Active Drivers ({drivers.length})
+                                    <h3 style={{ fontSize: '1.1rem', fontWeight: '600', position: 'sticky', top: 0, background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(10px)', zIndex: 10, paddingBottom: '10px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span>Active Drivers ({drivers.length})</span>
+                                        <button
+                                            onClick={() => {
+                                                if (drivers.length > 0) {
+                                                    const d = drivers[0];
+                                                    // Simulate movement
+                                                    const newLat = (d.currentLocation?.coordinates[1] || 12.9716) + 0.001;
+                                                    const newLng = (d.currentLocation?.coordinates[0] || 77.5946) + 0.001;
+
+                                                    // Emit fake socket event locally to test UI
+                                                    // Note: This won't update DB, just local view via socket listener
+                                                    // We need to manually trigger the listener callback if we can't emit to self easily, 
+                                                    // but better to actually emit if possible. 
+                                                    // Since we can't easily emit from here to *our* listener without server reflection,
+                                                    // we will manually update state for testing.
+                                                    setDrivers(prev => prev.map(p =>
+                                                        p._id === d._id ? { ...p, currentLocation: { type: 'Point', coordinates: [newLng, newLat] } } : p
+                                                    ));
+                                                }
+                                            }}
+                                            style={{ fontSize: '0.7rem', padding: '2px 5px', background: '#eee', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                                        >
+                                            Simulate Move
+                                        </button>
                                     </h3>
                                     {drivers.length === 0 ? (
                                         <div style={{ textAlign: 'center', padding: 'var(--space-8)', color: 'var(--text-secondary)' }}>
