@@ -65,6 +65,13 @@ router.put('/location', protect, authorize('driver'), async (req, res) => {
             { new: true }
         );
 
+        // Emit socket event for real-time tracking
+        const io = req.app.get('io');
+        io.emit('driverLocationUpdate', {
+            driverId: driver._id,
+            location: driver.currentLocation
+        });
+
         res.json({ success: true, location: driver.currentLocation });
     } catch (error) {
         console.error('Update location error:', error);
