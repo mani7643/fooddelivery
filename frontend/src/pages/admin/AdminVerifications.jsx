@@ -22,6 +22,33 @@ export default function AdminVerifications() {
     const [actionLoading, setActionLoading] = useState(false);
     const [notes, setNotes] = useState('');
 
+    const handleViewDocument = async (fileUrl) => {
+        if (!fileUrl) return;
+
+        // If it's already a full signed URL or external URL (rare), just open it
+        // Or if it's a local file URL logic
+        if (!fileUrl.startsWith('http')) {
+            // Local file, use existing logic inside getDocumentUrl but we can just construct it here
+            const localUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}${fileUrl}`;
+            window.open(localUrl, '_blank');
+            return;
+        }
+
+        // It is an S3 URL (starts with http). We need a signed URL.
+        try {
+            const res = await api.post('/documents/sign-url', { fileUrl });
+            if (res.data.signedUrl) {
+                window.open(res.data.signedUrl, '_blank');
+            } else {
+                alert('Could not generate secure link');
+            }
+        } catch (err) {
+            console.error('Error signing URL', err);
+            // Fallback: try opening directly just in case (will likely fail if private)
+            window.open(fileUrl, '_blank');
+        }
+    };
+
     useEffect(() => {
         if (viewMode === 'verifications') {
             fetchPendingDrivers();
@@ -465,7 +492,7 @@ export default function AdminVerifications() {
                                                 src={getDocumentUrl(selectedDriver.documents.aadhaarFront)}
                                                 alt="Aadhaar Front"
                                                 style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                onClick={() => window.open(getDocumentUrl(selectedDriver.documents.aadhaarFront), '_blank')}
+                                                onClick={() => handleViewDocument(selectedDriver.documents.aadhaarFront)}
                                             />
                                         </div>
                                     )}
@@ -476,7 +503,7 @@ export default function AdminVerifications() {
                                                 src={getDocumentUrl(selectedDriver.documents.aadhaarBack)}
                                                 alt="Aadhaar Back"
                                                 style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                onClick={() => window.open(getDocumentUrl(selectedDriver.documents.aadhaarBack), '_blank')}
+                                                onClick={() => handleViewDocument(selectedDriver.documents.aadhaarBack)}
                                             />
                                         </div>
                                     )}
@@ -487,7 +514,7 @@ export default function AdminVerifications() {
                                                 src={getDocumentUrl(selectedDriver.documents.dlFront)}
                                                 alt="DL Front"
                                                 style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                onClick={() => window.open(getDocumentUrl(selectedDriver.documents.dlFront), '_blank')}
+                                                onClick={() => handleViewDocument(selectedDriver.documents.dlFront)}
                                             />
                                         </div>
                                     )}
@@ -498,7 +525,7 @@ export default function AdminVerifications() {
                                                 src={getDocumentUrl(selectedDriver.documents.dlBack)}
                                                 alt="DL Back"
                                                 style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                onClick={() => window.open(getDocumentUrl(selectedDriver.documents.dlBack), '_blank')}
+                                                onClick={() => handleViewDocument(selectedDriver.documents.dlBack)}
                                             />
                                         </div>
                                     )}
@@ -509,7 +536,7 @@ export default function AdminVerifications() {
                                                 src={getDocumentUrl(selectedDriver.documents.panCard)}
                                                 alt="PAN Card"
                                                 style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                onClick={() => window.open(getDocumentUrl(selectedDriver.documents.panCard), '_blank')}
+                                                onClick={() => handleViewDocument(selectedDriver.documents.panCard)}
                                             />
                                         </div>
                                     )}

@@ -1,4 +1,4 @@
-import 'dotenv/config'; // Load env vars immediately
+import 'dotenv/config';
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
@@ -11,18 +11,14 @@ import { fileURLToPath } from 'url';
 import authRoutes from './routes/authRoutes.js';
 import driverRoutes from './routes/driverRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
-// import restaurantRoutes from './routes/restaurantRoutes.js' // removed restaurant routes
 import orderRoutes from './routes/orderRoutes.js';
+import documentRoutes from './routes/documentRoutes.js'; // Added document routes
 
 // Import socket handler
 import socketHandler from './socket/socketHandler.js';
 
-// Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Load environment variables (already loaded at top)
-// dotenv.config();
 
 // Initialize Express app
 const app = express();
@@ -46,7 +42,6 @@ const io = new Server(httpServer, {
 });
 
 // Middleware
-
 app.use(cors({
     origin: function (origin, callback) {
         // Allow requests with no origin (like mobile apps or curl requests)
@@ -75,7 +70,7 @@ if (!mongoUri) {
 }
 
 console.log('🔌 Connecting to MongoDB...');
-console.log('Using URI:', mongoUri.replace(/\/\/([^:]+):([^@]+)@/, '//*****:*****@')); // Hide credentials in logs
+console.log('Using URI:', mongoUri.replace(/\/\/([^:]+):([^@]+)@/, '//*****:*****@'));
 
 mongoose.connect(mongoUri)
     .then(() => {
@@ -98,8 +93,8 @@ app.set('io', io);
 app.use('/api/auth', authRoutes);
 app.use('/api/driver', driverRoutes);
 app.use('/api/admin', adminRoutes);
-// app.use('/api/restaurant', restaurantRoutes); // removed restaurant routes
 app.use('/api/orders', orderRoutes);
+app.use('/api/documents', documentRoutes); // Register document routes
 
 // Root route
 app.get('/', (req, res) => {
@@ -109,8 +104,8 @@ app.get('/', (req, res) => {
         endpoints: {
             auth: '/api/auth',
             driver: '/api/driver',
-            restaurant: '/api/restaurant',
-            orders: '/api/orders'
+            orders: '/api/orders',
+            documents: '/api/documents'
         }
     });
 });
