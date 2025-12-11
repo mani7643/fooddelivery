@@ -195,21 +195,50 @@ export default function DriverDashboard() {
                                 return;
                             }
                             console.log('Manual location trigger clicked');
-                            // Fake location increment to see movement
-                            const lat = 20.5937 + (Math.random() * 0.01);
-                            const lng = 78.9629 + (Math.random() * 0.01);
 
-                            // 1. Socket Emit
-                            socket.emit('updateLocation', {
-                                driverId: driver._id,
-                                location: { type: 'Point', coordinates: [lng, lat] }
-                            });
-                            console.log('Emitted manual socket update');
+                            // Try to get REAL current position
+                            if ('geolocation' in navigator) {
+                                navigator.geolocation.getCurrentPosition(
+                                    (position) => {
+                                        const { latitude, longitude } = position.coords;
+                                        console.log('Manual GPS Success:', latitude, longitude);
 
-                            // 2. API Call
-                            driverService.updateLocation(lat, lng)
-                                .then(res => alert('Location sent to server! Check Admin Dashboard.'))
-                                .catch(err => alert('Error sending location: ' + err.message));
+                                        // 1. Socket Emit
+                                        socket.emit('updateLocation', {
+                                            driverId: driver._id,
+                                            location: { type: 'Point', coordinates: [longitude, latitude] }
+                                        });
+
+                                        // 2. API Call
+                                        driverService.updateLocation(latitude, longitude)
+                                            .then(res => alert(`📍 Real location sent! Lat: ${latitude}, Lng: ${longitude}`))
+                                            .catch(err => alert('Error sending location: ' + err.message));
+                                    },
+                                    (error) => {
+                                        console.error('Manual GPS Error:', error);
+                                        // Fallback to manual entry if GPS fails
+                                        const manualLat = prompt("GPS Failed. Enter Latitude:", "17.3850"); // Default to Hyderabad
+                                        const manualLng = prompt("Enter Longitude:", "78.4867");
+
+                                        if (manualLat && manualLng) {
+                                            const lat = parseFloat(manualLat);
+                                            const lng = parseFloat(manualLng);
+
+                                            socket.emit('updateLocation', {
+                                                driverId: driver._id,
+                                                location: { type: 'Point', coordinates: [lng, lat] }
+                                            });
+
+                                            driverService.updateLocation(lat, lng)
+                                                .then(res => alert('Manual coordinates sent!'))
+                                                .catch(err => alert('Error: ' + err.message));
+                                        }
+                                    },
+                                    { enableHighAccuracy: true, timeout: 5000 }
+                                );
+                            } else {
+                                alert('Geolocation not supported');
+                            }
                         }}
                         className="btn"
                         style={{ backgroundColor: '#0ea5e9', color: 'white', fontSize: '12px', padding: '5px 10px' }}
