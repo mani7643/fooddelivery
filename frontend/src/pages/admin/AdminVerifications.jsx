@@ -346,7 +346,7 @@ export default function AdminVerifications() {
                             WebkitTextFillColor: 'transparent',
                             marginBottom: 'var(--space-2)'
                         }}>
-                            Admin Dashboard
+                            Admin Dashboard (v1.2)
                         </h1>
                         <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-lg)' }}>
                             Manage verify requests and admin approvals
