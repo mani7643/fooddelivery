@@ -295,7 +295,7 @@ router.get('/debug-s3', async (req, res) => {
 
 
 // Delete driver and associated user
-router.delete('/driver/:id', protect, admin, async (req, res) => {
+router.delete('/driver/:id', protect, authorize('admin'), async (req, res) => {
     try {
         const driver = await Driver.findById(req.params.id);
         if (!driver) {
