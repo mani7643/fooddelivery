@@ -227,5 +227,14 @@ jobs:
             # Note: scp-action preserves structure, so path is .../frontend-deploy-temp/frontend/dist
             aws s3 sync /home/${{ secrets.EC2_USER }}/frontend-deploy-temp/frontend/dist s3://${{ secrets.AWS_FRONTEND_BUCKET_NAME }} --delete
 
+            # Invalidate CloudFront Cache (if Distribution ID is provided)
+            # We use a conditional check to avoid failure if the secret is missing
+            if [ ! -z "${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}" ]; then
+                echo "Invalidating CloudFront Cache..."
+                aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+            else
+                echo "Skipping CloudFront Invalidation (Secret CLOUDFRONT_DISTRIBUTION_ID not set)"
+            fi
+
             # Cleanup
             rm -rf /home/${{ secrets.EC2_USER }}/frontend-deploy-temp
