@@ -675,7 +675,7 @@ export default function AdminVerifications() {
                                 <div style={{ borderRadius: 'var(--radius-xl)', overflow: 'hidden', position: 'relative', zIndex: 0, border: '1px solid var(--border-color)' }}>
                                     <MapContainer
                                         center={[20.5937, 78.9629]}
-                                        zoom={5}
+                                        zoom={16}
                                         style={{ height: '100%', width: '100%' }}
                                     >
                                         <TileLayer

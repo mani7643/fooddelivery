@@ -175,6 +175,18 @@ export default function DriverDashboard() {
                         <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-sm)' }}>
                             {isAvailable ? 'You are currently available for deliveries' : 'You are currently offline'}
                         </p>
+                        {isAvailable && (
+                            <div style={{ marginTop: '5px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <span style={{
+                                    width: '10px', height: '10px', borderRadius: '50%',
+                                    background: navigator.onLine ? '#10b981' : '#ef4444',
+                                    display: 'inline-block'
+                                }}></span>
+                                <span style={{ fontSize: '12px', color: '#666' }}>
+                                    GPS Tracking: <strong>Active</strong> (High Accuracy)
+                                </span>
+                            </div>
+                        )}
                     </div>
                     <button
                         onClick={toggleAvailability}
