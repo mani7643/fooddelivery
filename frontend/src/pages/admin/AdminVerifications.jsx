@@ -912,47 +912,47 @@ export default function AdminVerifications() {
                             </div>
 
                             {/* Actions */}
+                            {/* Actions */}
                             <div style={{ display: 'flex', gap: 'var(--space-4)' }}>
-                                {selectedDriver.verificationStatus !== 'verified' && selectedDriver.verificationStatus !== 'rejected' && (
-                                    <>
-                                        <button
-                                            onClick={handleApprove}
-                                            disabled={actionLoading}
-                                            style={{
-                                                flex: 1,
-                                                padding: 'var(--space-4)',
-                                                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: 'var(--radius-lg)',
-                                                fontWeight: 'var(--font-weight-semibold)',
-                                                cursor: actionLoading ? 'not-allowed' : 'pointer',
-                                                opacity: actionLoading ? 0.6 : 1
-                                            }}
-                                        >
-                                            {actionLoading ? 'Processing...' : '✓ Approve'}
-                                        </button>
-                                        <button
-                                            onClick={handleReject}
-                                            disabled={actionLoading}
-                                            style={{
-                                                flex: 1,
-                                                padding: 'var(--space-4)',
-                                                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: 'var(--radius-lg)',
-                                                fontWeight: 'var(--font-weight-semibold)',
-                                                cursor: actionLoading ? 'not-allowed' : 'pointer',
-                                                opacity: actionLoading ? 0.6 : 1
-                                            }}
-                                        >
-                                            {actionLoading ? 'Processing...' : '✗ Reject'}
-                                        </button>
-                                    </>
-                                )}
+                                {/* APPROVE BUTTON */}
+                                <button
+                                    onClick={handleApprove}
+                                    disabled={actionLoading}
+                                    style={{
+                                        flex: 1,
+                                        padding: 'var(--space-4)',
+                                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: 'var(--radius-lg)',
+                                        fontWeight: 'var(--font-weight-semibold)',
+                                        cursor: actionLoading ? 'not-allowed' : 'pointer',
+                                        opacity: actionLoading ? 0.6 : 1
+                                    }}
+                                >
+                                    {actionLoading ? 'Processing...' : (selectedDriver.verificationStatus === 'verified' ? '✓ Re-Send Approval' : '✓ Approve')}
+                                </button>
 
-                                {/* RECONSIDER BUTTON FOR REJECTED */}
+                                {/* REJECT BUTTON */}
+                                <button
+                                    onClick={handleReject}
+                                    disabled={actionLoading}
+                                    style={{
+                                        flex: 1,
+                                        padding: 'var(--space-4)',
+                                        background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: 'var(--radius-lg)',
+                                        fontWeight: 'var(--font-weight-semibold)',
+                                        cursor: actionLoading ? 'not-allowed' : 'pointer',
+                                        opacity: actionLoading ? 0.6 : 1
+                                    }}
+                                >
+                                    {actionLoading ? 'Processing...' : (selectedDriver.verificationStatus === 'rejected' ? '✗ Update Rejection' : '✗ Reject')}
+                                </button>
+
+                                {/* RECONSIDER BUTTON (Optional, maybe redundant now but keeping for "Move to Pending") */}
                                 {selectedDriver.verificationStatus === 'rejected' && (
                                     <button
                                         onClick={handleReconsider}
@@ -968,7 +968,7 @@ export default function AdminVerifications() {
                                             cursor: actionLoading ? 'not-allowed' : 'pointer',
                                         }}
                                     >
-                                        {actionLoading ? 'Processing...' : '↺ Reconsider'}
+                                        ↺ Set Pending
                                     </button>
                                 )}
 
@@ -976,7 +976,7 @@ export default function AdminVerifications() {
                                     onClick={() => setShowModal(false)}
                                     disabled={actionLoading}
                                     style={{
-                                        flex: selectedDriver.verificationStatus === 'verified' ? 1 : 0.5,
+                                        flex: 0.5,
                                         padding: 'var(--space-4) var(--space-6)',
                                         background: 'var(--bg-tertiary)',
                                         color: 'var(--text-secondary)',
