@@ -1,11 +1,14 @@
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = import.meta.env.VITE_API_URL.replace('/api', '');
+// Use relative path to leverage Vite Proxy (handles HTTPS -> HTTP upgrade)
+const SOCKET_URL = '/';
 
 let socket;
 
 export const initiateSocketConnection = (token) => {
     socket = io(SOCKET_URL, {
+        path: '/socket.io', // Standard request path
+        transports: ['websocket', 'polling'], // Allow fallback
         auth: {
             token
         },
