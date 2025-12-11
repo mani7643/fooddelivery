@@ -225,6 +225,11 @@ jobs:
 
             # Sync to S3 using EC2's IAM Role
             # Note: scp-action preserves structure, so path is .../frontend-deploy-temp/frontend/dist
+            
+            echo "=== DEBUG: Listing deploy directory ==="
+            ls -R /home/${{ secrets.EC2_USER }}/frontend-deploy-temp
+            echo "======================================="
+
             aws s3 sync /home/${{ secrets.EC2_USER }}/frontend-deploy-temp/frontend/dist s3://${{ secrets.AWS_FRONTEND_BUCKET_NAME }} --delete
 
             # Invalidate CloudFront Cache (if Distribution ID is provided)
