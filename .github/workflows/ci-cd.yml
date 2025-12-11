@@ -197,7 +197,7 @@ jobs:
 
       - name: Build Frontend
         env:
-          VITE_API_URL: http://${{ secrets.EC2_HOST }}:8000/api
+          VITE_API_URL: /api
         run: |
           cd frontend
           npm run build
