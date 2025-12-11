@@ -828,75 +828,72 @@ export default function AdminVerifications() {
                                 </div>
                             </div>
 
-                            {/* Documents */}
-                            <div style={{ marginBottom: 'var(--space-6)' }}>
-                                <h3 style={{ fontSize: 'var(--font-size-lg)', marginBottom: 'var(--space-3)' }}>
-                                    Uploaded Documents
-                                </h3>
-                                {!selectedDriver.documents || Object.keys(selectedDriver.documents).length === 0 ? (
-                                    <div style={{ padding: 'var(--space-4)', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', textAlign: 'center', color: 'var(--warning-500)' }}>
-                                        ⚠ No documents uploaded by driver yet
-                                    </div>
-                                ) : (
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-4)' }}>
-                                        {selectedDriver.documents?.aadhaarFront && (
-                                            <div>
-                                                <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>Aadhaar Front</p>
-                                                <img
-                                                    src={getDocumentUrl(selectedDriver.documents.aadhaarFront)}
-                                                    alt="Aadhaar Front"
-                                                    style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                    onClick={() => handleViewDocument(selectedDriver.documents.aadhaarFront)}
-                                                />
-                                            </div>
-                                        )}
-                                        {selectedDriver.documents?.aadhaarBack && (
-                                            <div>
-                                                <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>Aadhaar Back</p>
-                                                <img
-                                                    src={getDocumentUrl(selectedDriver.documents.aadhaarBack)}
-                                                    alt="Aadhaar Back"
-                                                    style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                    onClick={() => handleViewDocument(selectedDriver.documents.aadhaarBack)}
-                                                />
-                                            </div>
-                                        )}
-                                        {selectedDriver.documents?.dlFront && (
-                                            <div>
-                                                <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>DL Front</p>
-                                                <img
-                                                    src={getDocumentUrl(selectedDriver.documents.dlFront)}
-                                                    alt="DL Front"
-                                                    style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                    onClick={() => handleViewDocument(selectedDriver.documents.dlFront)}
-                                                />
-                                            </div>
-                                        )}
-                                        {selectedDriver.documents?.dlBack && (
-                                            <div>
-                                                <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>DL Back</p>
-                                                <img
-                                                    src={getDocumentUrl(selectedDriver.documents.dlBack)}
-                                                    alt="DL Back"
-                                                    style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                    onClick={() => handleViewDocument(selectedDriver.documents.dlBack)}
-                                                />
-                                            </div>
-                                        )}
-                                        {selectedDriver.documents?.panCard && (
-                                            <div>
-                                                <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>PAN Card</p>
-                                                <img
-                                                    src={getDocumentUrl(selectedDriver.documents.panCard)}
-                                                    alt="PAN Card"
-                                                    style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                    onClick={() => handleViewDocument(selectedDriver.documents.panCard)}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
+                            <h3 style={{ fontSize: 'var(--font-size-lg)', marginBottom: 'var(--space-3)' }}>
+                                Uploaded Documents
+                            </h3>
+                            {(!selectedDriver.documents || Object.values(selectedDriver.documents).filter(doc => doc).length === 0) ? (
+                                <div style={{ padding: 'var(--space-4)', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', textAlign: 'center', color: 'var(--warning-500)' }}>
+                                    ⚠ No documents uploaded by driver yet
+                                </div>
+                            ) : (
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-4)' }}>
+                                    {selectedDriver.documents?.aadhaarFront && (
+                                        <div>
+                                            <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>Aadhaar Front</p>
+                                            <img
+                                                src={getDocumentUrl(selectedDriver.documents.aadhaarFront)}
+                                                alt="Aadhaar Front"
+                                                style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
+                                                onClick={() => handleViewDocument(selectedDriver.documents.aadhaarFront)}
+                                            />
+                                        </div>
+                                    )}
+                                    {selectedDriver.documents?.aadhaarBack && (
+                                        <div>
+                                            <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>Aadhaar Back</p>
+                                            <img
+                                                src={getDocumentUrl(selectedDriver.documents.aadhaarBack)}
+                                                alt="Aadhaar Back"
+                                                style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
+                                                onClick={() => handleViewDocument(selectedDriver.documents.aadhaarBack)}
+                                            />
+                                        </div>
+                                    )}
+                                    {selectedDriver.documents?.dlFront && (
+                                        <div>
+                                            <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>DL Front</p>
+                                            <img
+                                                src={getDocumentUrl(selectedDriver.documents.dlFront)}
+                                                alt="DL Front"
+                                                style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
+                                                onClick={() => handleViewDocument(selectedDriver.documents.dlFront)}
+                                            />
+                                        </div>
+                                    )}
+                                    {selectedDriver.documents?.dlBack && (
+                                        <div>
+                                            <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>DL Back</p>
+                                            <img
+                                                src={getDocumentUrl(selectedDriver.documents.dlBack)}
+                                                alt="DL Back"
+                                                style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
+                                                onClick={() => handleViewDocument(selectedDriver.documents.dlBack)}
+                                            />
+                                        </div>
+                                    )}
+                                    {selectedDriver.documents?.panCard && (
+                                        <div>
+                                            <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>PAN Card</p>
+                                            <img
+                                                src={getDocumentUrl(selectedDriver.documents.panCard)}
+                                                alt="PAN Card"
+                                                style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
+                                                onClick={() => handleViewDocument(selectedDriver.documents.panCard)}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Notes */}
                             <div style={{ marginBottom: 'var(--space-6)' }}>
