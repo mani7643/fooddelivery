@@ -139,6 +139,21 @@ jobs:
             
             # Create/Update .env file with secrets
             echo "NODE_ENV=production" > .env
+            
+            # Update source code for manual dev server usage
+            # Check if git exists and repo is initialized
+            if [ -d .git ]; then
+                echo "Updating source code..."
+                git fetch origin main
+                git reset --hard origin/main
+            else
+                echo "Cloning repository..."
+                # Clone is tricky with auth, assuming public or https with token. 
+                # Since we are already in the directory, we might skip full clone if not set up.
+                # Just skipping if not a git repo to avoid errors.
+                echo "Not a git repository. Skipping source update."
+            fi
+
             echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> .env
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
             echo "JWT_EXPIRE=30d" >> .env
