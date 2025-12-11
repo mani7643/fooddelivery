@@ -11,7 +11,7 @@ export const driverService = {
         return response.data;
     },
 
-    updateLocation: async (latitude, longitude) => {
+    updateLocation: async ({ latitude, longitude }) => {
         const response = await api.put('/driver/location', { latitude, longitude });
         return response.data;
     },

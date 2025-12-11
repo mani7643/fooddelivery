@@ -142,6 +142,25 @@ router.get('/drivers', protect, authorize('admin'), async (req, res) => {
     }
 });
 
+// @route   GET /api/admin/online-drivers
+// @desc    Get all online drivers (available & verified)
+// @access  Private (Admin only)
+router.get('/online-drivers', protect, authorize('admin'), async (req, res) => {
+    try {
+        const drivers = await Driver.find({
+            verificationStatus: 'verified',
+            isAvailable: true
+        })
+            .select('userId name phone vehicleType vehicleNumber currentLocation currentStatus')
+            .populate('userId', 'name email phone');
+
+        res.json({ success: true, drivers });
+    } catch (error) {
+        console.error('Get online drivers error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
 // @route   GET /api/admin/pending-admins
 // @desc    Get all admins pending approval
 // @access  Private (Admin only)

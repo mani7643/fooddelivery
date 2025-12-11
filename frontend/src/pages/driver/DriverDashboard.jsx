@@ -72,6 +72,26 @@ export default function DriverDashboard() {
         }
     };
 
+    const [geoStatus, setGeoStatus] = useState('idle'); // idle, requesting, active, error, denied
+    const [geoError, setGeoError] = useState('');
+
+    // Helper to process location updates
+    const processLocationUpdate = (latitude, longitude) => {
+        setGeoStatus('active');
+        setGeoError('');
+
+        if (socket && driver) {
+            socket.emit('updateLocation', {
+                driverId: driver._id,
+                location: { latitude, longitude }
+            });
+        }
+
+        driverService.updateLocation({ latitude, longitude }).catch(err =>
+            console.error('Error persisting location:', err)
+        );
+    };
+
     // Geolocation tracking
     useEffect(() => {
         let watchId;
@@ -79,33 +99,30 @@ export default function DriverDashboard() {
         if (socket && driver && isAvailable) {
             if ('geolocation' in navigator) {
                 console.log('Starting geolocation tracking...');
+                setGeoStatus('requesting');
+
                 watchId = navigator.geolocation.watchPosition(
                     (position) => {
-                        const { latitude, longitude } = position.coords;
-
-                        // Emit location update to server
-                        socket.emit('updateLocation', {
-                            driverId: driver._id,
-                            location: { latitude, longitude }
-                        });
-
-                        // Also persist to DB via API (optional but good for initial state)
-                        driverService.updateLocation({ latitude, longitude }).catch(err =>
-                            console.error('Error persisting location:', err)
-                        );
+                        processLocationUpdate(position.coords.latitude, position.coords.longitude);
                     },
                     (error) => {
                         console.error('Geolocation error:', error);
+                        setGeoStatus('error');
+                        if (error.code === 1) setGeoStatus('denied');
+                        setGeoError(error.message || 'Location retrieval failed.');
                     },
                     {
-                        enableHighAccuracy: true,
-                        timeout: 10000,
-                        maximumAge: 5000
+                        enableHighAccuracy: false,
+                        timeout: 30000,
+                        maximumAge: 10000
                     }
                 );
             } else {
-                console.warn('Geolocation is not supported by this browser.');
+                setGeoStatus('error');
+                setGeoError('Geolocation is not supported by this browser.');
             }
+        } else {
+            setGeoStatus('idle');
         }
 
         return () => {
@@ -115,6 +132,26 @@ export default function DriverDashboard() {
             }
         };
     }, [socket, driver, isAvailable]);
+
+    const handleManualLocationParams = () => {
+        if (!navigator.geolocation) {
+            alert('Geolocation is not supported');
+            return;
+        }
+        setGeoStatus('requesting');
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                alert('Location updated successfully!');
+                processLocationUpdate(position.coords.latitude, position.coords.longitude);
+            },
+            (err) => {
+                setGeoStatus('error');
+                setGeoError(err.message);
+                alert(`Error: ${err.message}`);
+            },
+            { enableHighAccuracy: false, timeout: 10000 }
+        );
+    };
 
     useEffect(() => {
         loadData();
@@ -161,22 +198,68 @@ export default function DriverDashboard() {
                 </div>
 
                 {/* Availability Toggle */}
-                <div className="card" style={{ marginBottom: 'var(--space-6)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                        <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-semibold)', marginBottom: 'var(--space-1)' }}>
-                            Availability Status
-                        </h3>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-sm)' }}>
-                            {isAvailable ? 'You are currently available for deliveries' : 'You are currently offline'}
-                        </p>
+                <div className="card" style={{ marginBottom: 'var(--space-6)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                        <div>
+                            <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-semibold)', marginBottom: 'var(--space-1)' }}>
+                                Availability Status
+                            </h3>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-sm)' }}>
+                                {isAvailable
+                                    ? 'You are currently available. Location tracking is active.'
+                                    : 'Go Online to enable location tracking and receive orders'}
+                            </p>
+                        </div>
+                        <button
+                            onClick={toggleAvailability}
+                            className={`btn ${isAvailable ? 'btn-danger' : 'btn-success'}`}
+                            style={{ padding: 'var(--space-3) var(--space-6)' }}
+                        >
+                            {isAvailable ? '🔴 Go Offline' : '🟢 Go Online'}
+                        </button>
                     </div>
-                    <button
-                        onClick={toggleAvailability}
-                        className={`btn ${isAvailable ? 'btn-danger' : 'btn-success'}`}
-                        style={{ padding: 'var(--space-3) var(--space-6)' }}
-                    >
-                        {isAvailable ? '🔴 Go Offline' : '🟢 Go Online'}
-                    </button>
+
+                    {/* Geolocation Status Bar */}
+                    {isAvailable && (
+                        <div style={{
+                            padding: '10px',
+                            borderRadius: '8px',
+                            background: geoStatus === 'active' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                            border: `1px solid ${geoStatus === 'active' ? '#10b981' : '#ef4444'}`,
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <span style={{ fontSize: '1.2rem' }}>
+                                    {geoStatus === 'active' ? '📡' : geoStatus === 'requesting' ? '⏳' : '⚠️'}
+                                </span>
+                                <div>
+                                    <p style={{ fontWeight: 'bold', color: geoStatus === 'active' ? '#10b981' : '#ef4444' }}>
+                                        {geoStatus === 'active' ? 'Live Tracking Active' : geoStatus === 'requesting' ? 'Requesting Location...' : 'Location Error'}
+                                    </p>
+                                    {geoError && <p style={{ fontSize: '0.8rem', color: '#ef4444' }}>{geoError}</p>}
+                                </div>
+                            </div>
+
+                            {geoStatus !== 'active' && geoStatus !== 'requesting' && (
+                                <button
+                                    onClick={handleManualLocationParams}
+                                    style={{
+                                        padding: '4px 8px',
+                                        background: '#ef4444',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontSize: '0.9rem'
+                                    }}
+                                >
+                                    Enable GPS
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Stats Grid */}

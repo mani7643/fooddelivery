@@ -2,11 +2,28 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { useSocket } from '../../context/SocketContext';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Fix for default marker icon issues in React Leaflet
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerIconRetina from 'leaflet/dist/images/marker-icon-2x.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: markerIconRetina,
+    iconUrl: markerIcon,
+    shadowUrl: markerShadow,
+});
 
 export default function AdminVerifications() {
     const navigate = useNavigate();
     const { logout } = useAuth();
-    const [viewMode, setViewMode] = useState('verifications'); // 'verifications', 'verified', 'rejected', 'admins'
+    const { socket } = useSocket();
+    const [viewMode, setViewMode] = useState('verifications'); // 'verifications', 'verified', 'rejected', 'admins', 'online'
 
     // Helper to handle both local uploads and S3 URLs
     const getDocumentUrl = (path) => {
@@ -16,6 +33,7 @@ export default function AdminVerifications() {
     };
 
     const [drivers, setDrivers] = useState([]);
+    const [onlineDrivers, setOnlineDrivers] = useState([]);
     const [admins, setAdmins] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedDriver, setSelectedDriver] = useState(null);
@@ -71,10 +89,43 @@ export default function AdminVerifications() {
             fetchVerifiedDrivers();
         } else if (viewMode === 'rejected') {
             fetchRejectedDrivers();
+        } else if (viewMode === 'online') {
+            fetchOnlineDrivers();
         } else {
             fetchPendingAdmins();
         }
     }, [viewMode, searchQuery]); // Re-fetch when viewMode or searchQuery changes
+
+    // Socket Listener for Real-time Location Updates
+    useEffect(() => {
+        if (socket && viewMode === 'online') {
+            console.log('Listening for driver location updates...');
+
+            socket.on('driverLocationUpdate', (data) => {
+                const { driverId, location } = data;
+                setOnlineDrivers(prev => {
+                    // Check if driver exists in list
+                    const exists = prev.find(d => d._id === driverId);
+                    if (exists) {
+                        // Update location
+                        return prev.map(d =>
+                            d._id === driverId
+                                ? { ...d, currentLocation: { ...d.currentLocation, coordinates: [location.longitude, location.latitude] } }
+                                : d
+                        );
+                    } else {
+                        // Optionally fetch full driver details if new, or ignore until refresh
+                        // For now, we prefer not to add incomplete driver objects
+                        return prev;
+                    }
+                });
+            });
+
+            return () => {
+                socket.off('driverLocationUpdate');
+            };
+        }
+    }, [socket, viewMode]);
 
     const fetchStats = async () => {
         try {
@@ -117,6 +168,18 @@ export default function AdminVerifications() {
             setDrivers(response.data.drivers || []);
         } catch (error) {
             console.error('Error fetching rejected drivers:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchOnlineDrivers = async () => {
+        setLoading(true);
+        try {
+            const response = await api.get('/admin/online-drivers');
+            setOnlineDrivers(response.data.drivers || []);
+        } catch (error) {
+            console.error('Error fetching online drivers:', error);
         } finally {
             setLoading(false);
         }
@@ -231,8 +294,11 @@ export default function AdminVerifications() {
 
     const handleLogout = () => {
         if (window.confirm('Are you sure you want to logout?')) {
-            logout();
-            navigate('/login');
+            // Direct cleanup to avoid any context/state issues
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            // Force hard navigation
+            window.location.assign('/login');
         }
     };
 
@@ -244,7 +310,9 @@ export default function AdminVerifications() {
                     marginBottom: 'var(--space-8)',
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'flex-start'
+                    alignItems: 'flex-start',
+                    position: 'relative', // Ensure context for z-index
+                    zIndex: 20
                 }}>
                     <div>
                         <h1 className="text-4xl font-bold" style={{
@@ -261,6 +329,7 @@ export default function AdminVerifications() {
                     </div>
 
                     <button
+                        type="button" // Explicit type
                         onClick={handleLogout}
                         className="btn"
                         style={{
@@ -269,7 +338,10 @@ export default function AdminVerifications() {
                             border: '1px solid var(--border-color)',
                             padding: 'var(--space-3) var(--space-6)',
                             fontWeight: 'var(--font-weight-medium)',
-                            boxShadow: 'var(--shadow-sm)'
+                            boxShadow: 'var(--shadow-sm)',
+                            cursor: 'pointer',
+                            position: 'relative', // Bring to front
+                            zIndex: 50 // Ensure clickable
                         }}
                     >
                         Sign Out
@@ -393,6 +465,30 @@ export default function AdminVerifications() {
                         Rejected Drivers
                     </button>
                     <button
+                        onClick={() => setViewMode('online')}
+                        style={{
+                            padding: 'var(--space-3) var(--space-6)',
+                            borderRadius: 'var(--radius-md)',
+                            border: 'none',
+                            background: viewMode === 'online' ? 'var(--surface-raised)' : 'transparent',
+                            color: viewMode === 'online' ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                            fontWeight: 'var(--font-weight-medium)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            gap: 'var(--space-2)',
+                            alignItems: 'center'
+                        }}
+                    >
+                        Online Drivers
+                        <span style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            background: '#10b981',
+                            boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.2)'
+                        }}></span>
+                    </button>
+                    <button
                         onClick={() => setViewMode('admins')}
                         style={{
                             padding: 'var(--space-3) var(--space-6)',
@@ -490,6 +586,118 @@ export default function AdminVerifications() {
                                     ))}
                                 </div>
                             )
+                        )}
+
+                        {/* ONLINE DRIVERS MAP */}
+                        {viewMode === 'online' && (
+                            <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 'var(--space-6)', height: '600px' }}>
+                                {/* Sidebar List */}
+                                <div className="glass" style={{
+                                    padding: 'var(--space-4)',
+                                    borderRadius: 'var(--radius-lg)',
+                                    overflowY: 'auto',
+                                    height: '100%'
+                                }}>
+                                    <h3 style={{
+                                        padding: '0 var(--space-2) var(--space-4)',
+                                        borderBottom: '1px solid var(--border-color)',
+                                        marginBottom: 'var(--space-4)',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}>
+                                        <span>Active Drivers ({onlineDrivers.length})</span>
+                                        {/* Simulate Move button for testing */}
+                                        <button
+                                            onClick={() => {
+                                                // Only for demo/testing purposes
+                                                setOnlineDrivers(prev => prev.map(d => ({
+                                                    ...d,
+                                                    currentLocation: {
+                                                        coordinates: [
+                                                            d.currentLocation.coordinates[0] + (Math.random() - 0.5) * 0.01,
+                                                            d.currentLocation.coordinates[1] + (Math.random() - 0.5) * 0.01
+                                                        ]
+                                                    }
+                                                })));
+                                            }}
+                                            style={{ fontSize: '0.7rem', padding: '2px 6px', opacity: 0.5 }}
+                                        >
+                                            Simulate Move
+                                        </button>
+                                    </h3>
+
+                                    {onlineDrivers.length === 0 ? (
+                                        <div style={{ textAlign: 'center', padding: 'var(--space-8)', color: 'var(--text-tertiary)' }}>
+                                            <div style={{ fontSize: '2rem', marginBottom: 'var(--space-2)' }}>😴</div>
+                                            <p>No drivers online</p>
+                                        </div>
+                                    ) : (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                                            {onlineDrivers.map(driver => (
+                                                <div
+                                                    key={driver._id}
+                                                    style={{
+                                                        padding: 'var(--space-3)',
+                                                        background: 'var(--bg-secondary)',
+                                                        borderRadius: 'var(--radius-md)',
+                                                        cursor: 'pointer',
+                                                        border: selectedDriver?._id === driver._id ? '1px solid var(--primary-500)' : '1px solid transparent'
+                                                    }}
+                                                    onClick={() => setSelectedDriver(driver)}
+                                                >
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                                        <span style={{ fontWeight: 'bold' }}>{driver.userId.name}</span>
+                                                        <span style={{ fontSize: '0.8rem', color: '#10b981' }}>● Online</span>
+                                                    </div>
+                                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                                        {driver.vehicleType} • {driver.vehicleNumber}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Map */}
+                                <div className="glass" style={{
+                                    borderRadius: 'var(--radius-lg)',
+                                    overflow: 'hidden',
+                                    height: '100%',
+                                    zIndex: 0 // Ensure map stays below modals/headers if necessary
+                                }}>
+                                    <MapContainer
+                                        center={[20.5937, 78.9629]} // Default center (India)
+                                        zoom={5}
+                                        style={{ height: '100%', width: '100%' }}
+                                    >
+                                        <TileLayer
+                                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                        />
+                                        {onlineDrivers.map(driver => (
+                                            driver.currentLocation?.coordinates && (
+                                                <Marker
+                                                    key={driver._id}
+                                                    position={[
+                                                        driver.currentLocation.coordinates[1], // Latitude (Index 1 in GeoJSON)
+                                                        driver.currentLocation.coordinates[0]  // Longitude (Index 0 in GeoJSON)
+                                                    ]}
+                                                >
+                                                    <Popup>
+                                                        <div style={{ minWidth: '150px' }}>
+                                                            <h4 style={{ fontWeight: 'bold', marginBottom: '5px' }}>{driver.userId.name}</h4>
+                                                            <p style={{ margin: '2px 0' }}>Phone: {driver.userId.phone}</p>
+                                                            <p style={{ margin: '2px 0' }}>Vehicle: {driver.vehicleNumber}</p>
+                                                            <p style={{ margin: '2px 0', color: '#10b981' }}>Status: {driver.currentStatus}</p>
+                                                        </div>
+                                                    </Popup>
+                                                </Marker>
+                                            )
+                                        ))}
+                                    </MapContainer>
+                                </div>
+                            </div>
                         )}
 
                         {/* PENDING ADMINS LIST */}
