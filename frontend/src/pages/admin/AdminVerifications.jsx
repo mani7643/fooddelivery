@@ -611,15 +611,22 @@ export default function AdminVerifications() {
                                         <button
                                             onClick={() => {
                                                 // Only for demo/testing purposes
-                                                setOnlineDrivers(prev => prev.map(d => ({
-                                                    ...d,
-                                                    currentLocation: {
-                                                        coordinates: [
-                                                            d.currentLocation.coordinates[0] + (Math.random() - 0.5) * 0.01,
-                                                            d.currentLocation.coordinates[1] + (Math.random() - 0.5) * 0.01
-                                                        ]
-                                                    }
-                                                })));
+                                                setOnlineDrivers(prev => prev.map(d => {
+                                                    const [lng, lat] = d.currentLocation.coordinates;
+                                                    // Check if near 0,0 (Ocean) or invalid
+                                                    const isZero = !lat || !lng || (Math.abs(lat) < 1 && Math.abs(lng) < 1);
+
+                                                    // If zero, jump to Hyderabad, India. Else add noise.
+                                                    const newLng = isZero ? 78.9629 : lng + (Math.random() - 0.5) * 0.01;
+                                                    const newLat = isZero ? 20.5937 : lat + (Math.random() - 0.5) * 0.01;
+
+                                                    return {
+                                                        ...d,
+                                                        currentLocation: {
+                                                            coordinates: [newLng, newLat]
+                                                        }
+                                                    };
+                                                }));
                                             }}
                                             style={{ fontSize: '0.7rem', padding: '2px 6px', opacity: 0.5 }}
                                         >
