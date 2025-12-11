@@ -13,7 +13,7 @@ const router = express.Router();
 router.get('/pending-verifications', protect, authorize('admin'), async (req, res) => {
     try {
         const drivers = await Driver.find({
-            verificationStatus: 'pending_verification'
+            verificationStatus: { $in: ['pending_verification', 'pending_documents'] }
         }).populate('userId', 'name email phone');
 
         res.json({ success: true, drivers });

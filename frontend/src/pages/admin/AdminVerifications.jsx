@@ -568,6 +568,7 @@ export default function AdminVerifications() {
                                                     {driver.userId?.name || driver.name}
                                                     {viewMode === 'verified' && <span style={{ marginLeft: '10px', fontSize: '0.8rem', color: 'green' }}>✓ Verified</span>}
                                                     {viewMode === 'rejected' && <span style={{ marginLeft: '10px', fontSize: '0.8rem', color: 'red' }}>✗ Rejected</span>}
+                                                    {driver.verificationStatus === 'pending_documents' && <span style={{ marginLeft: '10px', fontSize: '0.8rem', color: 'var(--warning-500)' }}>⚠ Docs Missing</span>}
                                                 </h3>
                                                 <div style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-sm)' }}>
                                                     <p>📧 {driver.userId?.email}</p>
@@ -832,63 +833,69 @@ export default function AdminVerifications() {
                                 <h3 style={{ fontSize: 'var(--font-size-lg)', marginBottom: 'var(--space-3)' }}>
                                     Uploaded Documents
                                 </h3>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-4)' }}>
-                                    {selectedDriver.documents?.aadhaarFront && (
-                                        <div>
-                                            <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>Aadhaar Front</p>
-                                            <img
-                                                src={getDocumentUrl(selectedDriver.documents.aadhaarFront)}
-                                                alt="Aadhaar Front"
-                                                style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                onClick={() => handleViewDocument(selectedDriver.documents.aadhaarFront)}
-                                            />
-                                        </div>
-                                    )}
-                                    {selectedDriver.documents?.aadhaarBack && (
-                                        <div>
-                                            <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>Aadhaar Back</p>
-                                            <img
-                                                src={getDocumentUrl(selectedDriver.documents.aadhaarBack)}
-                                                alt="Aadhaar Back"
-                                                style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                onClick={() => handleViewDocument(selectedDriver.documents.aadhaarBack)}
-                                            />
-                                        </div>
-                                    )}
-                                    {selectedDriver.documents?.dlFront && (
-                                        <div>
-                                            <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>DL Front</p>
-                                            <img
-                                                src={getDocumentUrl(selectedDriver.documents.dlFront)}
-                                                alt="DL Front"
-                                                style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                onClick={() => handleViewDocument(selectedDriver.documents.dlFront)}
-                                            />
-                                        </div>
-                                    )}
-                                    {selectedDriver.documents?.dlBack && (
-                                        <div>
-                                            <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>DL Back</p>
-                                            <img
-                                                src={getDocumentUrl(selectedDriver.documents.dlBack)}
-                                                alt="DL Back"
-                                                style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                onClick={() => handleViewDocument(selectedDriver.documents.dlBack)}
-                                            />
-                                        </div>
-                                    )}
-                                    {selectedDriver.documents?.panCard && (
-                                        <div>
-                                            <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>PAN Card</p>
-                                            <img
-                                                src={getDocumentUrl(selectedDriver.documents.panCard)}
-                                                alt="PAN Card"
-                                                style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                onClick={() => handleViewDocument(selectedDriver.documents.panCard)}
-                                            />
-                                        </div>
-                                    )}
-                                </div>
+                                {!selectedDriver.documents || Object.keys(selectedDriver.documents).length === 0 ? (
+                                    <div style={{ padding: 'var(--space-4)', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', textAlign: 'center', color: 'var(--warning-500)' }}>
+                                        ⚠ No documents uploaded by driver yet
+                                    </div>
+                                ) : (
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-4)' }}>
+                                        {selectedDriver.documents?.aadhaarFront && (
+                                            <div>
+                                                <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>Aadhaar Front</p>
+                                                <img
+                                                    src={getDocumentUrl(selectedDriver.documents.aadhaarFront)}
+                                                    alt="Aadhaar Front"
+                                                    style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
+                                                    onClick={() => handleViewDocument(selectedDriver.documents.aadhaarFront)}
+                                                />
+                                            </div>
+                                        )}
+                                        {selectedDriver.documents?.aadhaarBack && (
+                                            <div>
+                                                <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>Aadhaar Back</p>
+                                                <img
+                                                    src={getDocumentUrl(selectedDriver.documents.aadhaarBack)}
+                                                    alt="Aadhaar Back"
+                                                    style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
+                                                    onClick={() => handleViewDocument(selectedDriver.documents.aadhaarBack)}
+                                                />
+                                            </div>
+                                        )}
+                                        {selectedDriver.documents?.dlFront && (
+                                            <div>
+                                                <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>DL Front</p>
+                                                <img
+                                                    src={getDocumentUrl(selectedDriver.documents.dlFront)}
+                                                    alt="DL Front"
+                                                    style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
+                                                    onClick={() => handleViewDocument(selectedDriver.documents.dlFront)}
+                                                />
+                                            </div>
+                                        )}
+                                        {selectedDriver.documents?.dlBack && (
+                                            <div>
+                                                <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>DL Back</p>
+                                                <img
+                                                    src={getDocumentUrl(selectedDriver.documents.dlBack)}
+                                                    alt="DL Back"
+                                                    style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
+                                                    onClick={() => handleViewDocument(selectedDriver.documents.dlBack)}
+                                                />
+                                            </div>
+                                        )}
+                                        {selectedDriver.documents?.panCard && (
+                                            <div>
+                                                <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>PAN Card</p>
+                                                <img
+                                                    src={getDocumentUrl(selectedDriver.documents.panCard)}
+                                                    alt="PAN Card"
+                                                    style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
+                                                    onClick={() => handleViewDocument(selectedDriver.documents.panCard)}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Notes */}
@@ -912,12 +919,11 @@ export default function AdminVerifications() {
                             </div>
 
                             {/* Actions */}
-                            {/* Actions */}
                             <div style={{ display: 'flex', gap: 'var(--space-4)' }}>
                                 {/* APPROVE BUTTON */}
                                 <button
                                     onClick={handleApprove}
-                                    disabled={actionLoading}
+                                    disabled={actionLoading || selectedDriver.verificationStatus === 'pending_documents'}
                                     style={{
                                         flex: 1,
                                         padding: 'var(--space-4)',
@@ -926,8 +932,8 @@ export default function AdminVerifications() {
                                         border: 'none',
                                         borderRadius: 'var(--radius-lg)',
                                         fontWeight: 'var(--font-weight-semibold)',
-                                        cursor: actionLoading ? 'not-allowed' : 'pointer',
-                                        opacity: actionLoading ? 0.6 : 1
+                                        cursor: (actionLoading || selectedDriver.verificationStatus === 'pending_documents') ? 'not-allowed' : 'pointer',
+                                        opacity: (actionLoading || selectedDriver.verificationStatus === 'pending_documents') ? 0.6 : 1
                                     }}
                                 >
                                     {actionLoading ? 'Processing...' : (selectedDriver.verificationStatus === 'verified' ? '✓ Re-Send Approval' : '✓ Approve')}
@@ -952,7 +958,7 @@ export default function AdminVerifications() {
                                     {actionLoading ? 'Processing...' : (selectedDriver.verificationStatus === 'rejected' ? '✗ Update Rejection' : '✗ Reject')}
                                 </button>
 
-                                {/* RECONSIDER BUTTON (Optional, maybe redundant now but keeping for "Move to Pending") */}
+                                {/* RECONSIDER BUTTON */}
                                 {selectedDriver.verificationStatus === 'rejected' && (
                                     <button
                                         onClick={handleReconsider}
@@ -989,6 +995,12 @@ export default function AdminVerifications() {
                                     Close
                                 </button>
                             </div>
+
+                            {selectedDriver.verificationStatus === 'pending_documents' && (
+                                <div style={{ marginTop: 'var(--space-4)', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                                    ⚠ Cannot approve until documents are uploaded by the driver.
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
