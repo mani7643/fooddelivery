@@ -79,6 +79,7 @@ export default function AdminVerifications() {
     };
 
     useEffect(() => {
+        console.log('AdminVerifications Component Loaded - Version 1.2 (Fix Deployed)');
         fetchStats();
     }, []);
 
