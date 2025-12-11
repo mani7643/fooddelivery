@@ -30,6 +30,7 @@ const allowedOrigins = [
     'http://127.0.0.1:5173',
     'http://18.60.109.68:5173',
     'http://manindra-devops.s3-website.ap-south-2.amazonaws.com',
+    'https://d2oivjm33gyjn0.cloudfront.net',
     process.env.FRONTEND_URL
 ].filter(Boolean);
 
