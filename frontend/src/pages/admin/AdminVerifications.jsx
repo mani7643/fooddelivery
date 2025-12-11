@@ -292,6 +292,30 @@ export default function AdminVerifications() {
         }
     };
 
+    const handleDelete = async () => {
+        if (!selectedDriver) return;
+
+        if (!window.confirm('WARNING: This will permanently delete the driver profile AND their user account. This action cannot be undone. Are you sure?')) {
+            return;
+        }
+
+        setActionLoading(true);
+        try {
+            await api.delete(`/admin/driver/${selectedDriver._id}`);
+
+            // Remove from list
+            setDrivers(drivers.filter(d => d._id !== selectedDriver._id));
+            setShowModal(false);
+            setSelectedDriver(null);
+            alert('Driver and user account deleted successfully.');
+            fetchStats();
+        } catch (error) {
+            alert('Error deleting driver: ' + (error.response?.data?.message || error.message));
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     const handleLogout = () => {
         if (window.confirm('Are you sure you want to logout?')) {
             // Direct cleanup to avoid any context/state issues
@@ -985,6 +1009,25 @@ export default function AdminVerifications() {
                                         ↺ Set Pending
                                     </button>
                                 )}
+
+                                {/* DELETE BUTTON */}
+                                <button
+                                    onClick={handleDelete}
+                                    disabled={actionLoading}
+                                    style={{
+                                        flex: 0.5,
+                                        padding: 'var(--space-4)',
+                                        background: 'var(--bg-tertiary)',
+                                        color: 'var(--danger-500)',
+                                        border: '1px solid var(--danger-500)',
+                                        borderRadius: 'var(--radius-lg)',
+                                        fontWeight: 'var(--font-weight-semibold)',
+                                        cursor: actionLoading ? 'not-allowed' : 'pointer',
+                                        opacity: actionLoading ? 0.6 : 1
+                                    }}
+                                >
+                                    🗑️
+                                </button>
 
                                 <button
                                     onClick={() => setShowModal(false)}

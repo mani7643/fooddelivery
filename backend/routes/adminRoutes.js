@@ -293,4 +293,28 @@ router.get('/debug-s3', async (req, res) => {
     }
 });
 
+
+// Delete driver and associated user
+router.delete('/driver/:id', protect, admin, async (req, res) => {
+    try {
+        const driver = await Driver.findById(req.params.id);
+        if (!driver) {
+            return res.status(404).json({ message: 'Driver not found' });
+        }
+
+        // Delete associated user account
+        if (driver.userId) {
+            await User.findByIdAndDelete(driver.userId);
+        }
+
+        // Delete driver profile
+        await Driver.findByIdAndDelete(req.params.id);
+
+        res.json({ message: 'Driver and associated user account deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting driver:', error);
+        res.status(500).json({ message: 'Error deleting driver' });
+    }
+});
+
 export default router;
