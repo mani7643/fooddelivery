@@ -35,7 +35,7 @@ const allowedOrigins = [
 // Initialize Socket.io
 const io = new Server(httpServer, {
     cors: {
-        origin: "*", // Allow all origins for dev/HTTPS testing
+        origin: allowedOrigins,
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
         credentials: true
     }
@@ -43,7 +43,15 @@ const io = new Server(httpServer, {
 
 // Middleware
 app.use(cors({
-    origin: true, // Reflect request origin
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true
 }));
 app.use(express.json());

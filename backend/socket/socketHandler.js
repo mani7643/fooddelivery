@@ -11,11 +11,9 @@ export default function socketHandler(io) {
 
         // Driver location update
         socket.on('updateLocation', (data) => {
-            console.log('[DEBUG] Socket received updateLocation:', data);
             const { driverId, location } = data;
-            // Broadcast to all connected clients (restaurants, customers, admins)
+            // Broadcast to all connected clients (restaurants, customers)
             io.emit('driverLocationUpdate', { driverId, location });
-            console.log('[DEBUG] Socket emitted driverLocationUpdate');
         });
 
         // New order notification to restaurant

@@ -3,22 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { initiateSocketConnection, disconnectSocket, subscribeToDriverUpdates, joinAdminRoom } from '../../services/socket';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-
-// Fix Leaflet default icon issue
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
-
-let DefaultIcon = L.icon({
-    iconUrl: icon,
-    shadowUrl: iconShadow,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41]
-});
-
-L.Marker.prototype.options.icon = DefaultIcon;
 
 export default function AdminVerifications() {
     const navigate = useNavigate();
@@ -519,8 +503,8 @@ export default function AdminVerifications() {
                     </div>
                 ) : (
                     <>
-                        {/* DRIVER VERIFICATIONS LIST & VERIFIED LIST & REJECTED LIST */}
-                        {(viewMode === 'verifications' || viewMode === 'verified' || viewMode === 'rejected') && (
+                        {/* DRIVER VERIFICATIONS LIST & VERIFIED LIST & REJECTED LIST & ONLINE LIST */}
+                        {(viewMode === 'verifications' || viewMode === 'verified' || viewMode === 'rejected' || viewMode === 'online') && (
                             drivers.length === 0 ? (
                                 <div className="glass" style={{
                                     padding: 'var(--space-12)',
@@ -566,16 +550,10 @@ export default function AdminVerifications() {
                                                     <p>📧 {driver.userId?.email}</p>
                                                     <p>📱 {driver.userId?.phone || driver.phone}</p>
                                                     <p>🚗 {driver.vehicleType} - {driver.vehicleNumber}</p>
-                                                    {viewMode === 'online' && driver.currentLocation?.coordinates && (driver.currentLocation.coordinates[0] !== 0 || driver.currentLocation.coordinates[1] !== 0) && (
-                                                        <a
-                                                            href={`https://www.google.com/maps?q=${driver.currentLocation.coordinates[1]},${driver.currentLocation.coordinates[0]}`}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            style={{ marginTop: '4px', fontSize: '0.75rem', color: 'var(--primary-500)', display: 'block', textDecoration: 'underline' }}
-                                                            title={`Lat: ${driver.currentLocation.coordinates[1]}, Lng: ${driver.currentLocation.coordinates[0]}`}
-                                                        >
-                                                            📍 Location: {driver.currentLocation.coordinates[1].toFixed(4)}, {driver.currentLocation.coordinates[0].toFixed(4)} ↗️
-                                                        </a>
+                                                    {viewMode === 'online' && driver.currentLocation?.coordinates && (
+                                                        <p style={{ marginTop: '4px', fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                                                            📍 Location: {driver.currentLocation.coordinates[1].toFixed(4)}, {driver.currentLocation.coordinates[0].toFixed(4)}
+                                                        </p>
                                                     )}
                                                 </div>
                                             </div>
@@ -590,120 +568,6 @@ export default function AdminVerifications() {
                                     ))}
                                 </div>
                             )
-                        )}
-
-
-
-                        {viewMode === 'online' && (
-                            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 2fr', gap: 'var(--space-4)', marginTop: 'var(--space-4)', height: 'calc(100vh - 200px)', minHeight: '600px' }}>
-                                {/* Debug Log */}
-                                {console.log('Online Drivers Render:', drivers)}
-                                {/* Left Side: Driver List */}
-                                <div className="glass" style={{
-                                    borderRadius: 'var(--radius-xl)',
-                                    overflowY: 'auto',
-                                    padding: 'var(--space-4)',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: 'var(--space-4)'
-                                }}>
-                                    <h3 style={{ fontSize: '1.1rem', fontWeight: '600', position: 'sticky', top: 0, background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(10px)', zIndex: 10, paddingBottom: '10px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span>Active Drivers ({drivers.length})</span>
-                                        <button
-                                            onClick={() => {
-                                                if (drivers.length > 0) {
-                                                    const d = drivers[0];
-                                                    // Simulate movement
-                                                    const newLat = (d.currentLocation?.coordinates[1] || 12.9716) + 0.001;
-                                                    const newLng = (d.currentLocation?.coordinates[0] || 77.5946) + 0.001;
-
-                                                    // Emit fake socket event locally to test UI
-                                                    // Note: This won't update DB, just local view via socket listener
-                                                    // We need to manually trigger the listener callback if we can't emit to self easily, 
-                                                    // but better to actually emit if possible. 
-                                                    // Since we can't easily emit from here to *our* listener without server reflection,
-                                                    // we will manually update state for testing.
-                                                    setDrivers(prev => prev.map(p =>
-                                                        p._id === d._id ? { ...p, currentLocation: { type: 'Point', coordinates: [newLng, newLat] } } : p
-                                                    ));
-                                                }
-                                            }}
-                                            style={{ fontSize: '0.7rem', padding: '2px 5px', background: '#eee', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                                        >
-                                            Simulate Move
-                                        </button>
-                                    </h3>
-                                    {drivers.length === 0 ? (
-                                        <div style={{ textAlign: 'center', padding: 'var(--space-8)', color: 'var(--text-secondary)' }}>
-                                            <div style={{ fontSize: '32px', marginBottom: '8px' }}>😴</div>
-                                            <p>No drivers online</p>
-                                        </div>
-                                    ) : (
-                                        drivers.map(driver => (
-                                            <div
-                                                key={driver._id}
-                                                style={{
-                                                    padding: 'var(--space-4)',
-                                                    background: 'var(--bg-secondary)',
-                                                    borderRadius: 'var(--radius-lg)',
-                                                    cursor: 'pointer',
-                                                    border: '1px solid transparent',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                                onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--primary-500)'}
-                                                onMouseLeave={(e) => e.currentTarget.style.borderColor = 'transparent'}
-                                            >
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                                                    <span style={{ fontWeight: '600' }}>{driver.userId?.name || driver.name}</span>
-                                                    <span style={{ fontSize: '0.7rem', color: '#10b981', background: '#d1fae5', padding: '2px 6px', borderRadius: '10px' }}>Online</span>
-                                                </div>
-                                                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                                                    <div>🚗 {driver.vehicleType} - {driver.vehicleNumber}</div>
-                                                    <div>📞 {driver.userId?.phone || driver.phone}</div>
-                                                </div>
-                                                {driver.currentLocation?.coordinates && (
-                                                    <div style={{ marginTop: '6px', fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                                                        Lat: {driver.currentLocation.coordinates[1].toFixed(4)}, Lng: {driver.currentLocation.coordinates[0].toFixed(4)}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-
-                                {/* Right Side: Map */}
-                                <div style={{ borderRadius: 'var(--radius-xl)', overflow: 'hidden', position: 'relative', zIndex: 0, border: '1px solid var(--border-color)' }}>
-                                    <MapContainer
-                                        center={[20.5937, 78.9629]}
-                                        zoom={16}
-                                        style={{ height: '100%', width: '100%' }}
-                                    >
-                                        <TileLayer
-                                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                        />
-                                        {drivers.map(driver => (
-                                            driver.currentLocation?.coordinates &&
-                                            (driver.currentLocation.coordinates[1] !== 0 || driver.currentLocation.coordinates[0] !== 0) && (
-                                                <Marker
-                                                    key={driver._id}
-                                                    position={[driver.currentLocation.coordinates[1], driver.currentLocation.coordinates[0]]}
-                                                >
-                                                    <Popup>
-                                                        <div style={{ minWidth: '200px' }}>
-                                                            <h3 style={{ margin: '0 0 5px 0', fontSize: '16px', fontWeight: 'bold' }}>{driver.userId?.name || driver.name}</h3>
-                                                            <p style={{ margin: '0 0 5px 0' }}>🚗 {driver.vehicleType} - {driver.vehicleNumber}</p>
-                                                            <div style={{ marginTop: '5px', fontSize: '12px', color: '#666' }}>
-                                                                {driver.currentLocation.coordinates[1].toFixed(5)}, {driver.currentLocation.coordinates[0].toFixed(5)}
-                                                            </div>
-                                                        </div>
-                                                    </Popup>
-                                                </Marker>
-                                            )
-                                        ))}
-                                    </MapContainer>
-                                </div>
-                            </div>
                         )}
 
                         {/* PENDING ADMINS LIST */}

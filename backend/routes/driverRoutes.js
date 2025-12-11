@@ -53,25 +53,17 @@ router.put('/profile', protect, authorize('driver'), async (req, res) => {
 router.put('/location', protect, authorize('driver'), async (req, res) => {
     try {
         const { latitude, longitude } = req.body;
-        console.log(`[DEBUG] PUT /location hit by Driver ${req.user._id}. Lat: ${latitude}, Lng: ${longitude}`);
 
         const driver = await Driver.findOneAndUpdate(
             { userId: req.user._id },
             {
                 currentLocation: {
                     type: 'Point',
-                    coordinates: [parseFloat(longitude), parseFloat(latitude)]
+                    coordinates: [longitude, latitude]
                 }
             },
             { new: true }
         );
-
-        // Emit socket event for real-time tracking
-        const io = req.app.get('io');
-        io.emit('driverLocationUpdate', {
-            driverId: driver._id,
-            location: driver.currentLocation
-        });
 
         res.json({ success: true, location: driver.currentLocation });
     } catch (error) {

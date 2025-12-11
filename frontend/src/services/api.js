@@ -1,9 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-    // Usage of relative path '/api' forces request through Vite Proxy (in dev) 
-    // or Nginx/Server (in prod). This avoids Mixed Content errors.
-    baseURL: '/api',
+    // Use localhost in Dev mode, otherwise use Env variable (from CI/CD or .env)
+    baseURL: import.meta.env.DEV ? 'http://localhost:8000/api' : (import.meta.env.VITE_API_URL || 'http://localhost:8000/api'),
     headers: {
         'Content-Type': 'application/json'
     }
