@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
-import { initiateSocketConnection, disconnectSocket, subscribeToDriverUpdates, joinAdminRoom } from '../../services/socket';
 
 export default function AdminVerifications() {
     const navigate = useNavigate();
-    const { logout, user } = useAuth(); // Added user here
-    const [viewMode, setViewMode] = useState('verifications'); // 'verifications', 'verified', 'rejected', 'online', 'admins'
+    const { logout } = useAuth();
+    const [viewMode, setViewMode] = useState('verifications'); // 'verifications', 'verified', 'rejected', 'admins'
 
     // Helper to handle both local uploads and S3 URLs
     const getDocumentUrl = (path) => {
@@ -63,48 +62,7 @@ export default function AdminVerifications() {
 
     useEffect(() => {
         fetchStats();
-
-        // Initialize socket
-        const token = localStorage.getItem('token');
-        if (token) {
-            initiateSocketConnection(token);
-            // We need userId to join room, but we don't have it easily accessible here without decoding token or from context
-            // Assuming useAuth provides user object
-        }
-
-        return () => {
-            disconnectSocket();
-        }
-    }, [viewMode]);
-
-    useEffect(() => {
-        if (user && user._id) {
-            joinAdminRoom(user._id);
-        }
-    }, [user]);
-
-    useEffect(() => {
-        if (viewMode === 'online') {
-            subscribeToDriverUpdates((err, data) => {
-                if (data) {
-                    setDrivers(prevDrivers => {
-                        return prevDrivers.map(d => {
-                            if (d._id === data.driverId) {
-                                return {
-                                    ...d,
-                                    currentLocation: {
-                                        type: 'Point',
-                                        coordinates: data.location.coordinates
-                                    }
-                                };
-                            }
-                            return d;
-                        });
-                    });
-                }
-            });
-        }
-    }, [viewMode]);
+    }, []);
 
     useEffect(() => {
         if (viewMode === 'verifications') {
@@ -113,8 +71,6 @@ export default function AdminVerifications() {
             fetchVerifiedDrivers();
         } else if (viewMode === 'rejected') {
             fetchRejectedDrivers();
-        } else if (viewMode === 'online') {
-            fetchOnlineDrivers();
         } else {
             fetchPendingAdmins();
         }
@@ -161,18 +117,6 @@ export default function AdminVerifications() {
             setDrivers(response.data.drivers || []);
         } catch (error) {
             console.error('Error fetching rejected drivers:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const fetchOnlineDrivers = async () => {
-        setLoading(true);
-        try {
-            const response = await api.get('/admin/online-drivers');
-            setDrivers(response.data.drivers || []);
-        } catch (error) {
-            console.error('Error fetching online drivers:', error);
         } finally {
             setLoading(false);
         }
@@ -449,22 +393,6 @@ export default function AdminVerifications() {
                         Rejected Drivers
                     </button>
                     <button
-                        onClick={() => setViewMode('online')}
-                        style={{
-                            padding: 'var(--space-3) var(--space-6)',
-                            borderRadius: 'var(--radius-md)',
-                            border: 'none',
-                            background: viewMode === 'online' ? 'var(--surface-raised)' : 'transparent',
-                            color: viewMode === 'online' ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                            fontWeight: 'var(--font-weight-medium)',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            gap: 'var(--space-2)'
-                        }}
-                    >
-                        Online Drivers 🟢
-                    </button>
-                    <button
                         onClick={() => setViewMode('admins')}
                         style={{
                             padding: 'var(--space-3) var(--space-6)',
@@ -503,8 +431,8 @@ export default function AdminVerifications() {
                     </div>
                 ) : (
                     <>
-                        {/* DRIVER VERIFICATIONS LIST & VERIFIED LIST & REJECTED LIST & ONLINE LIST */}
-                        {(viewMode === 'verifications' || viewMode === 'verified' || viewMode === 'rejected' || viewMode === 'online') && (
+                        {/* DRIVER VERIFICATIONS LIST & VERIFIED LIST & REJECTED LIST */}
+                        {(viewMode === 'verifications' || viewMode === 'verified' || viewMode === 'rejected') && (
                             drivers.length === 0 ? (
                                 <div className="glass" style={{
                                     padding: 'var(--space-12)',
@@ -512,13 +440,13 @@ export default function AdminVerifications() {
                                     textAlign: 'center'
                                 }}>
                                     <div style={{ fontSize: '64px', marginBottom: 'var(--space-4)' }}>
-                                        {viewMode === 'verifications' ? '✅' : viewMode === 'verified' ? '📂' : viewMode === 'online' ? '😴' : '🚫'}
+                                        {viewMode === 'verifications' ? '✅' : viewMode === 'verified' ? '📂' : '🚫'}
                                     </div>
                                     <h3 style={{ fontSize: 'var(--font-size-xl)', marginBottom: 'var(--space-2)' }}>
-                                        {viewMode === 'verifications' ? 'All Drivers Verified!' : viewMode === 'verified' ? 'No Verified Drivers Found' : viewMode === 'online' ? 'No Online Drivers' : 'No Rejected Drivers'}
+                                        {viewMode === 'verifications' ? 'All Drivers Verified!' : viewMode === 'verified' ? 'No Verified Drivers Found' : 'No Rejected Drivers'}
                                     </h3>
                                     <p style={{ color: 'var(--text-secondary)' }}>
-                                        {viewMode === 'verifications' ? 'No pending driver verifications at the moment.' : viewMode === 'verified' ? 'No drivers have been verified yet.' : viewMode === 'online' ? 'No drivers are currently online.' : 'No drivers currently rejected.'}
+                                        {viewMode === 'verifications' ? 'No pending driver verifications at the moment.' : viewMode === 'verified' ? 'No drivers have been verified yet.' : 'No drivers currently rejected.'}
                                     </p>
                                 </div>
                             ) : (
@@ -544,17 +472,11 @@ export default function AdminVerifications() {
                                                     {driver.userId?.name || driver.name}
                                                     {viewMode === 'verified' && <span style={{ marginLeft: '10px', fontSize: '0.8rem', color: 'green' }}>✓ Verified</span>}
                                                     {viewMode === 'rejected' && <span style={{ marginLeft: '10px', fontSize: '0.8rem', color: 'red' }}>✗ Rejected</span>}
-                                                    {viewMode === 'online' && <span style={{ marginLeft: '10px', fontSize: '0.8rem', color: '#10b981' }}>● Online</span>}
                                                 </h3>
                                                 <div style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-sm)' }}>
                                                     <p>📧 {driver.userId?.email}</p>
                                                     <p>📱 {driver.userId?.phone || driver.phone}</p>
                                                     <p>🚗 {driver.vehicleType} - {driver.vehicleNumber}</p>
-                                                    {viewMode === 'online' && driver.currentLocation?.coordinates && (
-                                                        <p style={{ marginTop: '4px', fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                                                            📍 Location: {driver.currentLocation.coordinates[1].toFixed(4)}, {driver.currentLocation.coordinates[0].toFixed(4)}
-                                                        </p>
-                                                    )}
                                                 </div>
                                             </div>
                                             <button
@@ -562,7 +484,7 @@ export default function AdminVerifications() {
                                                 className="btn btn-primary"
                                                 style={{ padding: 'var(--space-3) var(--space-6)' }}
                                             >
-                                                {viewMode === 'verified' || viewMode === 'rejected' || viewMode === 'online' ? 'View Details' : 'Review Documents'}
+                                                {viewMode === 'verified' || viewMode === 'rejected' ? 'View/Edit' : 'Review Documents'}
                                             </button>
                                         </div>
                                     ))}
