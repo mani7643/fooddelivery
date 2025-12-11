@@ -272,14 +272,26 @@ router.get('/debug-s3', async (req, res) => {
             MaxKeys: 1
         });
 
-        const response = await s3.send(command);
+        const listResponse = await s3.send(command);
+
+        // Test Write Permission
+        const { PutObjectCommand } = await import('@aws-sdk/client-s3');
+        const uploadCommand = new PutObjectCommand({
+            Bucket: bucketName,
+            Key: 'debug-write-test.txt',
+            Body: 'S3 Write Permission Test - Success',
+            ContentType: 'text/plain'
+        });
+
+        await s3.send(uploadCommand);
 
         res.json({
             success: true,
-            message: 'Successfully connected to S3',
+            message: 'Successfully connected and WROTE to S3',
             bucket: bucketName,
             region: process.env.AWS_REGION,
-            data: response
+            data: listResponse,
+            writeTest: 'Success'
         });
     } catch (error) {
         console.error('S3 Debug Error:', error);
