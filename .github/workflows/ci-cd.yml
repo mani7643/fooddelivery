@@ -72,14 +72,7 @@ jobs:
           push: true
           tags: ghcr.io/${{ env.REPO_OWNER }}/fooddelivery-backend:latest
 
-      - name: Build and Push Frontend
-        uses: docker/build-push-action@v4
-        with:
-          context: ./frontend
-          push: true
-          tags: ghcr.io/${{ env.REPO_OWNER }}/fooddelivery-frontend:latest
-          build-args: |
-            VITE_API_URL=http://${{ secrets.EC2_HOST }}:8000/api
+
 
   deploy:
     needs: docker-build-and-push
