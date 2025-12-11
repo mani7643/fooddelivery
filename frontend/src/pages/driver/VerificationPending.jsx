@@ -17,10 +17,11 @@ export default function VerificationPending() {
     const checkVerificationStatus = async () => {
         try {
             const response = await api.get('/driver/documents');
-            setVerificationStatus(response.data.verificationStatus);
+            const status = response.data.verificationStatus;
+            setVerificationStatus(status);
 
             // If verified, redirect to dashboard
-            if (response.data.verificationStatus === 'verified') {
+            if (status === 'verified') {
                 navigate('/driver');
             }
         } catch (error) {
@@ -40,6 +41,44 @@ export default function VerificationPending() {
                     borderTop: '4px solid var(--primary-500)',
                     borderRadius: '50%'
                 }}></div>
+            </div>
+        );
+    }
+
+    if (verificationStatus === 'rejected') {
+        return (
+            <div style={{ minHeight: '100vh', padding: 'var(--space-6)', background: 'var(--bg-primary)' }}>
+                <div style={{ maxWidth: '600px', margin: '0 auto', paddingTop: 'var(--space-12)', textAlign: 'center' }}>
+                    <div style={{ fontSize: '80px', marginBottom: 'var(--space-4)' }}>❌</div>
+                    <h1 className="text-4xl font-bold" style={{
+                        color: 'var(--danger-500)',
+                        marginBottom: 'var(--space-2)'
+                    }}>
+                        Verification Rejected
+                    </h1>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-lg)', marginBottom: 'var(--space-8)' }}>
+                        Unfortunately, your documents were not approved. Please review the requirements and upload again.
+                    </p>
+
+                    <div className="glass" style={{ padding: 'var(--space-8)', borderRadius: 'var(--radius-2xl)' }}>
+                        <button
+                            onClick={() => navigate('/driver/upload-documents')}
+                            className="btn btn-primary"
+                            style={{
+                                width: '100%',
+                                padding: 'var(--space-4)',
+                                fontSize: 'var(--font-size-lg)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 'var(--space-3)'
+                            }}
+                        >
+                            <span>📤</span>
+                            Re-upload Documents
+                        </button>
+                    </div>
+                </div>
             </div>
         );
     }

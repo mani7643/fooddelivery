@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSocket } from '../../context/SocketContext';
 import { driverService } from '../../services/driverService';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 import StatsCard from '../../components/StatsCard';
 import OrderCard from '../../components/OrderCard';
@@ -8,6 +9,7 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 
 export default function DriverDashboard() {
     const { socket } = useSocket();
+    const navigate = useNavigate();
     const [driver, setDriver] = useState(null);
     const [activeOrders, setActiveOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -18,6 +20,13 @@ export default function DriverDashboard() {
         setLoading(true);
         try {
             const profileData = await driverService.getDriverProfile();
+
+            // Check verification status and redirect if needed
+            if (profileData.driver.verificationStatus !== 'verified') {
+                navigate('/driver/verification-pending');
+                return;
+            }
+
             const ordersData = await driverService.getActiveOrders();
             setDriver(profileData.driver);
             setIsAvailable(profileData.driver.isAvailable);
