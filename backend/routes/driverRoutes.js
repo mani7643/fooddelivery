@@ -53,6 +53,7 @@ router.put('/profile', protect, authorize('driver'), async (req, res) => {
 router.put('/location', protect, authorize('driver'), async (req, res) => {
     try {
         const { latitude, longitude } = req.body;
+        console.log(`[DEBUG] PUT /location hit by Driver ${req.user._id}. Lat: ${latitude}, Lng: ${longitude}`);
 
         const driver = await Driver.findOneAndUpdate(
             { userId: req.user._id },

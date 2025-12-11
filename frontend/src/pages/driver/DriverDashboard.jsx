@@ -82,6 +82,7 @@ export default function DriverDashboard() {
                 watchId = navigator.geolocation.watchPosition(
                     (position) => {
                         const { latitude, longitude } = position.coords;
+                        console.log('Browser GPS Update:', latitude, longitude);
 
                         // Emit location update to server (Send GeoJSON to match Admin expectations)
                         socket.emit('updateLocation', {
@@ -93,13 +94,13 @@ export default function DriverDashboard() {
                         });
 
                         // Also persist to DB via API
-                        // Fix: driverService.updateLocation expects (lat, lng), not an object
                         driverService.updateLocation(latitude, longitude).catch(err =>
                             console.error('Error persisting location:', err)
                         );
                     },
                     (error) => {
-                        console.error('Geolocation error:', error);
+                        console.error('Geolocation error:', error.message);
+                        alert('GPS Error: ' + error.message);
                     },
                     {
                         enableHighAccuracy: true,
@@ -109,6 +110,7 @@ export default function DriverDashboard() {
                 );
             } else {
                 console.warn('Geolocation is not supported by this browser.');
+                alert('Geolocation not supported');
             }
         }
 
@@ -181,6 +183,40 @@ export default function DriverDashboard() {
                     >
                         {isAvailable ? '🔴 Go Offline' : '🟢 Go Online'}
                     </button>
+                </div>
+
+                {/* DEBUG: Manual Location Trigger */}
+                <div style={{ padding: '10px', background: '#f0f9ff', borderRadius: '8px', marginBottom: '20px', border: '1px dashed #0ea5e9' }}>
+                    <p style={{ fontSize: '12px', marginBottom: '5px', color: '#0369a1' }}>🔧 Debug Controls (Use if live tracking fails)</p>
+                    <button
+                        onClick={() => {
+                            if (!driver || !driver._id) {
+                                alert('Driver profile not loaded yet');
+                                return;
+                            }
+                            console.log('Manual location trigger clicked');
+                            // Fake location increment to see movement
+                            const lat = 20.5937 + (Math.random() * 0.01);
+                            const lng = 78.9629 + (Math.random() * 0.01);
+
+                            // 1. Socket Emit
+                            socket.emit('updateLocation', {
+                                driverId: driver._id,
+                                location: { type: 'Point', coordinates: [lng, lat] }
+                            });
+                            console.log('Emitted manual socket update');
+
+                            // 2. API Call
+                            driverService.updateLocation(lat, lng)
+                                .then(res => alert('Location sent to server! Check Admin Dashboard.'))
+                                .catch(err => alert('Error sending location: ' + err.message));
+                        }}
+                        className="btn"
+                        style={{ backgroundColor: '#0ea5e9', color: 'white', fontSize: '12px', padding: '5px 10px' }}
+                    >
+                        📍 Force Send Test Location
+                    </button>
+                    <p style={{ fontSize: '10px', marginTop: '5px', color: '#666' }}>Browser Geolocation Status: {navigator.geolocation ? 'Supported' : 'Not Supported'}</p>
                 </div>
 
                 {/* Stats Grid */}
