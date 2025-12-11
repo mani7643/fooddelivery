@@ -17,7 +17,7 @@ export default function DriverDashboard() {
     const loadData = async () => {
         setLoading(true);
         try {
-            const profileData = await driverService.getDriverProfile();
+            const profileData = await driverService.getProfile();
             const ordersData = await driverService.getActiveOrders();
             setDriver(profileData.driver);
             setIsAvailable(profileData.driver.isAvailable);
