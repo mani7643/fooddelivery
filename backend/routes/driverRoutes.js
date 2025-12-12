@@ -3,9 +3,12 @@ import { protect, authorize } from '../middleware/authMiddleware.js';
 import Driver from '../models/Driver.js';
 import Order from '../models/Order.js';
 import User from '../models/User.js';
-// import { uploadDocuments } from '../middleware/upload.js'; // Removed in favor of S3
+import { uploadDocumentsS3 } from '../middleware/uploadS3.js';
 
 const router = express.Router();
+
+// Debug: Global variable to track upload attempts
+export let lastUploadAttempt = null;
 
 // @route   GET /api/driver/profile
 // @desc    Get driver profile
@@ -227,16 +230,6 @@ router.get('/earnings', protect, authorize('driver'), async (req, res) => {
 // @route   POST /api/driver/upload-documents
 // @desc    Upload driver verification documents
 // @access  Private (Driver only)
-import { uploadDocumentsS3 } from '../middleware/uploadS3.js';
-
-// ... (imports)
-
-// Debug: Global variable to track upload attempts
-export let lastUploadAttempt = null;
-
-// @route   POST /api/driver/upload-documents
-// @desc    Upload driver verification documents
-// @access  Private (Driver only)
 router.post('/upload-documents', protect, authorize('driver'), (req, res, next) => {
     // Log intent before multer
     lastUploadAttempt = {
@@ -263,32 +256,15 @@ router.post('/upload-documents', protect, authorize('driver'), (req, res, next) 
         // Build document URLs from uploaded files (S3 URLs)
         const documentUrls = {};
 
-        if (req.files.aadhaarFront) {
-            documentUrls.aadhaarFront = req.files.aadhaarFront[0].location;
-            console.log('Aadhaar Front URL:', documentUrls.aadhaarFront);
-        }
-        if (req.files.aadhaarBack) {
-            documentUrls.aadhaarBack = req.files.aadhaarBack[0].location;
-        }
-        if (req.files.dlFront) {
-            documentUrls.dlFront = req.files.dlFront[0].location;
-        }
-        if (req.files.dlBack) {
-            documentUrls.dlBack = req.files.dlBack[0].location;
-        }
-        if (req.files.panCard) {
-            documentUrls.panCard = req.files.panCard[0].location;
-        }
+        if (req.files.aadhaarFront) documentUrls.aadhaarFront = req.files.aadhaarFront[0].location;
+        if (req.files.aadhaarBack) documentUrls.aadhaarBack = req.files.aadhaarBack[0].location;
+        if (req.files.dlFront) documentUrls.dlFront = req.files.dlFront[0].location;
+        if (req.files.dlBack) documentUrls.dlBack = req.files.dlBack[0].location;
+        if (req.files.panCard) documentUrls.panCard = req.files.panCard[0].location;
 
         // Update driver documents
-        driver.documents = {
-            ...driver.documents,
-            ...documentUrls
-        };
-
-        // Update verification status to pending_verification
+        driver.documents = { ...driver.documents, ...documentUrls };
         driver.verificationStatus = 'pending_verification';
-
         await driver.save();
 
         console.log(`✅ Documents uploaded for driver: ${driver.name}`);
@@ -301,23 +277,113 @@ router.post('/upload-documents', protect, authorize('driver'), (req, res, next) 
         });
     } catch (error) {
         console.error('Upload documents error:', error);
-        res.status(500).json({
-            message: 'Failed to upload documents',
+        res.status(500).json({ message: 'Failed to upload documents', error: error.message });
+    }
+});
 
-            res.status(200).json({
-                success: true,
-                documents: driver.documents,
-                verificationStatus: driver.verificationStatus,
-                verificationNotes: driver.verificationNotes,
-                verifiedAt: driver.verifiedAt
-            });
-        } catch (error) {
-            console.error('Get documents error:', error);
-            res.status(500).json({
-                message: 'Failed to get documents',
-                error: error.message
-            });
+// @route   POST /api/driver/upload-documents-base64
+// @desc    Upload driver verification documents (Base64 JSON bypass)
+// @access  Private (Driver only)
+router.post('/upload-documents-base64', protect, authorize('driver'), async (req, res) => {
+    try {
+        console.log('📦 [Base64 Upload] Received request');
+        const { lastUploadAttempt } = await import('../routes/driverRoutes.js');
+        if (lastUploadAttempt) lastUploadAttempt.step = 'Base64 Route Handler Hit';
+
+        const files = req.body;
+
+        if (!files || Object.keys(files).length === 0) {
+            return res.status(400).json({ message: 'No files provided' });
         }
-    });
+
+        // Import S3 client directly (bypass middleware)
+        const { s3Client } = await import('../middleware/uploadS3.js');
+        const { Upload } = await import('@aws-sdk/lib-storage');
+
+        const documentUrls = {};
+        const uploadPromises = [];
+
+        for (const [key, base64String] of Object.entries(files)) {
+            if (!base64String) continue;
+
+            const matches = base64String.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+            if (!matches || matches.length !== 3) {
+                console.error(`Invalid base64 string for ${key}`);
+                continue;
+            }
+
+            const contentType = matches[1];
+            const buffer = Buffer.from(matches[2], 'base64');
+            const fileExtension = contentType.split('/')[1] || 'bin';
+            const fileName = `${req.user._id}/documents/${key}-${Date.now()}.${fileExtension}`;
+
+            const upload = new Upload({
+                client: s3Client,
+                params: {
+                    Bucket: process.env.AWS_BUCKET_NAME,
+                    Key: fileName,
+                    Body: buffer,
+                    ContentType: contentType
+                }
+            });
+
+            uploadPromises.push(
+                upload.done().then(result => {
+                    documentUrls[key] = result.Location;
+                })
+            );
+        }
+
+        await Promise.all(uploadPromises);
+
+        // Update Driver
+        const driver = await Driver.findOne({ userId: req.user._id });
+        if (!driver) {
+            return res.status(404).json({ message: 'Driver profile not found' });
+        }
+
+        driver.documents = { ...driver.documents, ...documentUrls };
+        driver.verificationStatus = 'pending_verification';
+        await driver.save();
+
+        console.log(`✅ Base64 Documents uploaded for driver: ${driver.name}`);
+
+        res.json({
+            success: true,
+            message: 'Documents uploaded successfully (Base64)',
+            documents: documentUrls
+        });
+
+    } catch (error) {
+        console.error('Base64 Upload Error:', error);
+        res.status(500).json({ message: 'Upload failed', error: error.message });
+    }
+});
+
+// @route   GET /api/driver/documents
+// @desc    Get driver documents and verification status
+// @access  Private (Driver only)
+router.get('/documents', protect, authorize('driver'), async (req, res) => {
+    try {
+        const driver = await Driver.findOne({ userId: req.user._id });
+        if (!driver) {
+            return res.status(404).json({ message: 'Driver profile not found' });
+        }
+
+        res.status(200).json({
+            success: true,
+            documents: driver.documents,
+            verificationStatus: driver.verificationStatus,
+            verificationNotes: driver.verificationNotes,
+            verifiedAt: driver.verifiedAt
+        });
+    } catch (error) {
+        console.error('Get documents error:', error);
+        res.status(500).json({
+            message: 'Failed to get documents',
+            error: error.message
+        });
+    }
+});
 
 export default router;
