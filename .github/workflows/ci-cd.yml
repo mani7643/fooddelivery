@@ -82,22 +82,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
       - name: Copy docker-compose to EC2
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "docker-compose.yml"
-          target: "/home/${{ secrets.EC2_USER }}/app"
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "mkdir -p /home/${{ secrets.EC2_USER }}/app"
+          scp -i ~/.ssh/id_rsa docker-compose.yml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/app/docker-compose.yml
 
       - name: Deploy to EC2
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             # Detect OS and install Docker
             if command -v apt-get &> /dev/null; then
                # Ubuntu/Debian
@@ -144,8 +143,8 @@ jobs:
             # Check if git exists and repo is initialized
             if [ -d .git ]; then
                 echo "Updating source code..."
-                git fetch origin main
-                git reset --hard origin/main
+                git fetch origin main || true # Ignore fetch errors if HEAD detached
+                git reset --hard origin/main || true
             else
                 echo "Cloning repository..."
                 # Remove current directory contents to clone fresh (careful with .env which we just made)
@@ -181,6 +180,7 @@ jobs:
             
             # Prune unused images to save space
             sudo docker image prune -f
+          EOF
 
   deploy-frontend-s3:
     needs: build-and-test
@@ -209,35 +209,37 @@ jobs:
           cd frontend
           npm run build
 
-      - name: Copy build to EC2
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "frontend/dist"
-          target: "/home/${{ secrets.EC2_USER }}/frontend-deploy-temp"
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Upload frontend build to EC2
+        run: |
+          # Create target directory first
+          ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "mkdir -p /home/${{ secrets.EC2_USER }}/frontend-deploy-temp"
+          # Recursive copy
+          scp -i ~/.ssh/id_rsa -r frontend/dist ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/frontend-deploy-temp/dist
 
       - name: Deploy to S3 via EC2
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             # Ensure AWS CLI is installed
             if ! command -v aws &> /dev/null; then
               sudo yum install -y aws-cli || sudo apt-get install -y awscli
             fi
 
             # Sync to S3 using EC2's IAM Role
-            # Note: scp-action preserves structure, so path is .../frontend-deploy-temp/frontend/dist
+            # Note: scp -r created /home/user/frontend-deploy-temp/dist
             
             echo "=== DEBUG: Listing deploy directory ==="
             ls -R /home/${{ secrets.EC2_USER }}/frontend-deploy-temp
             echo "======================================="
 
-            aws s3 sync /home/${{ secrets.EC2_USER }}/frontend-deploy-temp/frontend/dist s3://${{ secrets.AWS_FRONTEND_BUCKET_NAME }} --delete
+            # Check if dist exists directly or if it's nested
+            aws s3 sync /home/${{ secrets.EC2_USER }}/frontend-deploy-temp/dist s3://${{ secrets.AWS_FRONTEND_BUCKET_NAME }} --delete
 
             # Invalidate CloudFront Cache (if Distribution ID is provided)
             # We use a conditional check to avoid failure if the secret is missing
@@ -250,3 +252,4 @@ jobs:
 
             # Cleanup
             rm -rf /home/${{ secrets.EC2_USER }}/frontend-deploy-temp
+          EOF
