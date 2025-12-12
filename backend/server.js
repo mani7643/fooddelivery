@@ -58,8 +58,15 @@ app.use(cors({
 }));
 
 // Global Request Logger - Debugging CloudFront/Uploads
+export let lastGlobalRequest = null;
 app.use((req, res, next) => {
     console.log(`🌍 [Global Log] ${req.method} ${req.url}`);
+    lastGlobalRequest = {
+        method: req.method,
+        url: req.url,
+        time: new Date().toISOString(),
+        headers: req.headers
+    };
     next();
 });
 
