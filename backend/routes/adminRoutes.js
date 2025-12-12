@@ -344,9 +344,13 @@ router.get('/debug-db', async (req, res) => {
 
         const driver = await Driver.findOne({ userId: user._id });
 
+        // Import the debug variable from driverRoutes
+        const { lastUploadAttempt } = await import('../routes/driverRoutes.js');
+
         res.json({
             success: true,
             message: 'Driver found',
+            lastUploadLog: lastUploadAttempt || 'No upload requests logged since server restart',
             user: { _id: user._id, name: user.name, email: user.email },
             driver: driver ? {
                 _id: driver._id,
