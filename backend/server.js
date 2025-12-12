@@ -56,8 +56,15 @@ app.use(cors({
     },
     credentials: true
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// Global Request Logger - Debugging CloudFront/Uploads
+app.use((req, res, next) => {
+    console.log(`🌍 [Global Log] ${req.method} ${req.url}`);
+    next();
+});
+
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
