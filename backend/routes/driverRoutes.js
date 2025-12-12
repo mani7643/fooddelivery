@@ -231,10 +231,24 @@ import { uploadDocumentsS3 } from '../middleware/uploadS3.js';
 
 // ... (imports)
 
+// Debug: Global variable to track upload attempts
+export let lastUploadAttempt = null;
+
 // @route   POST /api/driver/upload-documents
 // @desc    Upload driver verification documents
 // @access  Private (Driver only)
-router.post('/upload-documents', protect, authorize('driver'), uploadDocumentsS3, async (req, res) => {
+router.post('/upload-documents', protect, authorize('driver'), (req, res, next) => {
+    // Log intent before multer
+    lastUploadAttempt = {
+        time: new Date().toISOString(),
+        user: req.user._id,
+        headers: req.headers['content-type'],
+        step: 'Reached Route Handler (Pre-Multer)'
+    };
+    console.log('Upload Request Received:', lastUploadAttempt);
+    next();
+}, uploadDocumentsS3, async (req, res) => {
+    lastUploadAttempt.step = 'Passed Multer (Success)';
     try {
         // Find driver profile
         const driver = await Driver.findOne({ userId: req.user._id });
