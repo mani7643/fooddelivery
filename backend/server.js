@@ -59,14 +59,25 @@ app.use(cors({
 
 // Global Request Logger - Debugging CloudFront/Uploads
 export let lastGlobalRequest = null;
+export let lastPostRequest = null; // Track POST specifically
+
 app.use((req, res, next) => {
     console.log(`🌍 [Global Log] ${req.method} ${req.url}`);
-    lastGlobalRequest = {
+
+    const logData = {
         method: req.method,
         url: req.url,
         time: new Date().toISOString(),
         headers: req.headers
     };
+
+    lastGlobalRequest = logData;
+
+    if (req.method === 'POST') {
+        lastPostRequest = logData;
+        console.log(`📦 [POST Log] Captured POST to ${req.url}`);
+    }
+
     next();
 });
 

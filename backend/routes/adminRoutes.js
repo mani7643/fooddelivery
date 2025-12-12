@@ -347,12 +347,13 @@ router.get('/debug-db', async (req, res) => {
         // Import the debug variable from driverRoutes
         const { lastUploadAttempt } = await import('../routes/driverRoutes.js');
         // Import global log from server.js
-        const { lastGlobalRequest } = await import('../server.js');
+        const { lastGlobalRequest, lastPostRequest } = await import('../server.js');
 
         res.json({
             success: true,
             message: 'Driver found',
             globalLog: lastGlobalRequest || 'No global requests logged',
+            postLog: lastPostRequest || 'No POST requests logged',
             lastUploadLog: lastUploadAttempt || 'No upload requests logged since server restart',
             user: { _id: user._id, name: user.name, email: user.email },
             driver: driver ? {
