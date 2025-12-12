@@ -22,6 +22,10 @@ export default function DriverDashboard() {
             const profileData = await driverService.getDriverProfile();
 
             // Check verification status and redirect if needed
+            if (profileData.driver.verificationStatus === 'pending_documents') {
+                navigate('/driver/upload-documents');
+                return;
+            }
             if (profileData.driver.verificationStatus !== 'verified') {
                 navigate('/driver/verification-pending');
                 return;

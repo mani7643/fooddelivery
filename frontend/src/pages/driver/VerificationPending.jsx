@@ -23,6 +23,11 @@ export default function VerificationPending() {
             // If verified, redirect to dashboard
             if (status === 'verified') {
                 navigate('/driver');
+                return;
+            }
+            if (status === 'pending_documents') {
+                navigate('/driver/upload-documents');
+                return;
             }
         } catch (error) {
             console.error('Error checking verification status:', error);
