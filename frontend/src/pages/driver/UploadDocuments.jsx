@@ -76,8 +76,12 @@ export default function UploadDocuments() {
             });
 
             // Upload documents
-            // Note: Do NOT set Content-Type manually for FormData. Let the browser set the boundary.
-            const response = await api.post('/driver/upload-documents', formData);
+            // Explicitly unset Content-Type so browser sets 'multipart/form-data' with boundary
+            const response = await api.post('/driver/upload-documents', formData, {
+                headers: {
+                    'Content-Type': null
+                }
+            });
 
             setSuccess('Documents uploaded successfully! Redirecting...');
 
