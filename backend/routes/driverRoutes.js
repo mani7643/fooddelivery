@@ -262,10 +262,13 @@ router.post('/upload-documents', protect, authorize('driver'), (req, res, next) 
         if (req.files.dlBack) documentUrls.dlBack = req.files.dlBack[0].location;
         if (req.files.panCard) documentUrls.panCard = req.files.panCard[0].location;
 
-        // Update driver documents
-        driver.documents = { ...driver.documents, ...documentUrls };
-        driver.verificationStatus = 'pending_verification';
-        await driver.save();
+        // Update using findByIdAndUpdate to bypass potential validation errors on other fields
+        await Driver.findByIdAndUpdate(driver._id, {
+            $set: {
+                documents: { ...driver.documents, ...documentUrls },
+                verificationStatus: 'pending_verification'
+            }
+        });
 
         console.log(`✅ Documents uploaded for driver: ${driver.name}`);
 
@@ -342,9 +345,14 @@ router.post('/upload-documents-base64', protect, authorize('driver'), async (req
             return res.status(404).json({ message: 'Driver profile not found' });
         }
 
-        driver.documents = { ...driver.documents, ...documentUrls };
-        driver.verificationStatus = 'pending_verification';
-        await driver.save();
+        // Use findByIdAndUpdate to avoid triggering validation on other fields (like regex for vehicle number)
+        // occurring if the user has legacy invalid data.
+        await Driver.findByIdAndUpdate(driver._id, {
+            $set: {
+                documents: { ...driver.documents, ...documentUrls },
+                verificationStatus: 'pending_verification'
+            }
+        });
 
         console.log(`✅ Base64 Documents uploaded for driver: ${driver.name}`);
 

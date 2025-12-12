@@ -25,6 +25,7 @@ export default function VerificationPending() {
                 navigate('/driver');
                 return;
             }
+            // Only redirect to upload if strictly pending_documents
             if (status === 'pending_documents') {
                 navigate('/driver/upload-documents');
                 return;
