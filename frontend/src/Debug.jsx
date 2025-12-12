@@ -29,7 +29,7 @@ async function testAPI() {
 }
 
 // Run test after 2 seconds
-setTimeout(testAPI, 2000);
+// setTimeout(testAPI, 2000);
 
 export default function Debug() {
     return (
