@@ -148,12 +148,16 @@ jobs:
                 git reset --hard origin/main
             else
                 echo "Cloning repository..."
-                # Clone is tricky with auth, assuming public or https with token. 
-                # Since we are already in the directory, we might skip full clone if not set up.
-                # Just skipping if not a git repo to avoid errors.
-                echo "Not a git repository. Skipping source update."
+                # Remove current directory contents to clone fresh (careful with .env which we just made)
+                # Actually, better to just init and pull
+                git init
+                git remote add origin https://github.com/${{ github.repository }}.git
+                git fetch origin main
+                git reset --hard origin/main
             fi
 
+            # Re-create .env after git operations (just in case git reset wiped it)
+            echo "NODE_ENV=production" > .env
             echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> .env
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
             echo "JWT_EXPIRE=30d" >> .env
@@ -169,11 +173,14 @@ jobs:
             # Login to GHCR on EC2 (as root/sudo to ensure docker access)
             echo ${{ secrets.GITHUB_TOKEN }} | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            # Pull latest images
+            # Pull latest images explicitly
             sudo docker-compose pull
 
-            # Restart containers
-            sudo docker-compose up -d --remove-orphans
+            # Restart containers with force-recreate to ensure new image is used
+            sudo docker-compose up -d --force-recreate --remove-orphans
+            
+            # Prune unused images to save space
+            sudo docker image prune -f
 
   deploy-frontend-s3:
     needs: build-and-test
