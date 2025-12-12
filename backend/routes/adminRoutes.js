@@ -329,4 +329,34 @@ router.delete('/driver/:id', protect, authorize('admin'), async (req, res) => {
     }
 });
 
+// @route   GET /api/admin/debug-db
+// @desc    Debug Database Driver Status
+// @access  Public (Temporary for debugging) - verify it is protected in prod
+router.get('/debug-db', async (req, res) => {
+    try {
+        const email = 'tonybigfan0@gmail.com';
+        const User = (await import('../models/User.js')).default;
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.json({ message: 'User not found in DB', email });
+        }
+
+        const driver = await Driver.findOne({ userId: user._id });
+
+        res.json({
+            success: true,
+            message: 'Driver found',
+            user: { _id: user._id, name: user.name, email: user.email },
+            driver: driver ? {
+                _id: driver._id,
+                verificationStatus: driver.verificationStatus,
+                documents: driver.documents
+            } : 'No Driver Profile'
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;
