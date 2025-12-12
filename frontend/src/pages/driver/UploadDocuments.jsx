@@ -67,21 +67,31 @@ export default function UploadDocuments() {
         setUploading(true);
 
         try {
-            // Create FormData
-            const formData = new FormData();
-            Object.keys(files).forEach(key => {
-                if (files[key]) {
-                    formData.append(key, files[key]);
-                }
+            // Convert files to Base64
+            const filePromises = Object.keys(files).map(key => {
+                return new Promise((resolve, reject) => {
+                    const file = files[key];
+                    if (!file) {
+                        resolve({ key, data: null });
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = () => resolve({ key, data: reader.result }); // reader.result is Data URL
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
             });
 
-            // Upload documents
-            // Explicitly unset Content-Type so browser sets 'multipart/form-data' with boundary
-            const response = await api.post('/driver/upload-documents', formData, {
-                headers: {
-                    'Content-Type': null
-                }
-            });
+            const results = await Promise.all(filePromises);
+            const payload = results.reduce((acc, { key, data }) => {
+                if (data) acc[key] = data;
+                return acc;
+            }, {});
+
+            console.log('Sending Base64 Payload...'); // Debug
+
+            // Use NEW Base64 Endpoint
+            const response = await api.post('/driver/upload-documents-base64', payload);
 
             setSuccess('Documents uploaded successfully! Redirecting...');
 
@@ -89,7 +99,8 @@ export default function UploadDocuments() {
                 navigate('/driver/verification-pending');
             }, 2000);
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to upload documents');
+            console.error('Upload Error:', err);
+            setError(err.response?.data?.message || 'Failed to upload documents. Request Rejected.');
         } finally {
             setUploading(false);
         }

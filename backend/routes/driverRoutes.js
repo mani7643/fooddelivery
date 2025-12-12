@@ -303,35 +303,21 @@ router.post('/upload-documents', protect, authorize('driver'), (req, res, next) 
         console.error('Upload documents error:', error);
         res.status(500).json({
             message: 'Failed to upload documents',
-            error: error.message
-        });
-    }
-});
 
-// @route   GET /api/driver/documents
-// @desc    Get driver documents and verification status
-// @access  Private (Driver only)
-router.get('/documents', protect, authorize('driver'), async (req, res) => {
-    try {
-        const driver = await Driver.findOne({ userId: req.user._id });
-        if (!driver) {
-            return res.status(404).json({ message: 'Driver profile not found' });
+            res.status(200).json({
+                success: true,
+                documents: driver.documents,
+                verificationStatus: driver.verificationStatus,
+                verificationNotes: driver.verificationNotes,
+                verifiedAt: driver.verifiedAt
+            });
+        } catch (error) {
+            console.error('Get documents error:', error);
+            res.status(500).json({
+                message: 'Failed to get documents',
+                error: error.message
+            });
         }
-
-        res.status(200).json({
-            success: true,
-            documents: driver.documents,
-            verificationStatus: driver.verificationStatus,
-            verificationNotes: driver.verificationNotes,
-            verifiedAt: driver.verifiedAt
-        });
-    } catch (error) {
-        console.error('Get documents error:', error);
-        res.status(500).json({
-            message: 'Failed to get documents',
-            error: error.message
-        });
-    }
-});
+    });
 
 export default router;
