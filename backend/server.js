@@ -102,7 +102,7 @@ app.use('/api/documents', documentRoutes); // Register document routes
 app.get('/', (req, res) => {
     res.json({
         message: 'Food Delivery Partner Platform API',
-        version: '1.0.0',
+        version: '1.0.1-debug',
         endpoints: {
             auth: '/api/auth',
             driver: '/api/driver',
