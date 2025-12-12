@@ -250,6 +250,10 @@ router.post('/upload-documents', protect, authorize('driver'), (req, res, next) 
 }, uploadDocumentsS3, async (req, res) => {
     lastUploadAttempt.step = 'Passed Multer (Success)';
     try {
+        if (!req.files || Object.keys(req.files).length === 0) {
+            throw new Error('No files received (Multer parsed nothing). Check Content-Type header.');
+        }
+
         // Find driver profile
         const driver = await Driver.findOne({ userId: req.user._id });
         if (!driver) {
