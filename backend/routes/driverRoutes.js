@@ -5,6 +5,9 @@ import Order from '../models/Order.js';
 import User from '../models/User.js';
 import { uploadDocumentsS3 } from '../middleware/uploadS3.js';
 
+import { s3 as s3Client } from '../middleware/uploadS3.js';
+import { Upload } from '@aws-sdk/lib-storage';
+
 const router = express.Router();
 
 // Debug: Global variable to track upload attempts
@@ -299,10 +302,8 @@ router.post('/upload-documents-base64', protect, authorize('driver'), async (req
             return res.status(400).json({ message: 'No files provided' });
         }
 
-        // Import S3 client directly (bypass middleware)
-        // Import S3 client directly (bypass middleware)
-        const { s3: s3Client } = await import('../middleware/uploadS3.js');
-        const { Upload } = await import('@aws-sdk/lib-storage');
+        // Initialize S3 Upload
+        console.log('Initializing S3 Upload...');
 
         const documentUrls = {};
         const uploadPromises = [];
