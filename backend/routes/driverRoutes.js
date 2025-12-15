@@ -341,6 +341,21 @@ router.post('/confirm-documents', protect, authorize('driver'), async (req, res)
 
         console.log(`✅ Documents confirmed for driver: ${driver.name} (Direct Upload)`);
 
+        // Notify Admins
+        try {
+            const admins = await User.find({ role: 'admin' });
+            for (const admin of admins) {
+                await notificationService.sendAdminDocumentNotification(
+                    admin.email,
+                    driver.userId.name,
+                    driver.userId.email
+                );
+            }
+            console.log(`📢 Notified ${admins.length} admins about new documents`);
+        } catch (notifyError) {
+            console.error('Failed to notify admins:', notifyError);
+        }
+
         res.json({
             success: true,
             message: 'Documents confirmed and profile updated',
