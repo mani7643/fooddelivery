@@ -57,25 +57,36 @@ export default function UploadDocuments() {
         setSuccess('');
 
         // Validate all files are uploaded
-        const requiredFiles = ['aadhaarFront', 'aadhaarBack', 'dlFront', 'dlBack', 'panCard'];
-        const missingFiles = requiredFiles.filter(field => !files[field]);
+        alert('Stage 1: Button Clicked'); // Trace 1
+
+        // Assuming 'files' state now holds the files directly, and we don't have a separate 'state' object with errors.
+        // The original validation for missing files is more appropriate here.
+        const requiredFields = ['aadhaarFront', 'aadhaarBack', 'dlFront', 'dlBack', 'panCard'];
+        const missingFiles = requiredFields.filter(field => !files[field]);
 
         if (missingFiles.length > 0) {
             setError(`Please upload all required documents: ${missingFiles.join(', ')}`);
+            alert('Stage 1.5: Validation Error - Missing Files'); // Trace 1.5
             return;
         }
 
         setUploading(true);
+        setError('');
 
         try {
-            // Convert files to Base64
-            const filePromises = Object.keys(files).map(key => {
+            // The 'files' state already contains the collected files.
+            // No need to reconstruct 'files' object from a 'state' object.
+            alert(`Stage 2: Files Collected (${Object.keys(files).length})`); // Trace 2
+
+            if (Object.keys(files).length === 0) {
+                setError('Please select at least one document to upload.');
+                alert('Stage 2.5: No Files Selected');
+                return;
+            }
+
+            // Convert all to Base64
+            const filePromises = Object.entries(files).map(([key, file]) => {
                 return new Promise((resolve, reject) => {
-                    const file = files[key];
-                    if (!file) {
-                        resolve({ key, data: null });
-                        return;
-                    }
                     const reader = new FileReader();
                     reader.onload = () => resolve({ key, data: reader.result }); // reader.result is Data URL
                     reader.onerror = reject;
@@ -89,11 +100,14 @@ export default function UploadDocuments() {
                 return acc;
             }, {});
 
-            console.log('Sending Base64 Payload...'); // Debug
-            // alert('Starting Upload... Please wait.'); // Temporary Debug Alert
+            alert('Stage 3: Base64 Conversion Done'); // Trace 3
+            console.log('Sending Base64 Payload...');
 
             // Use NEW Base64 Endpoint
+            alert('Stage 4: Sending Request to /driver-debug/upload'); // Trace 4
             const response = await api.post('/driver-debug/upload', payload);
+
+            alert('Stage 5: Response Received ' + response.status); // Trace 5
 
             console.log('Upload successful, refreshing profile...');
             try {
