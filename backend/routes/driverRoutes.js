@@ -343,17 +343,22 @@ router.post('/confirm-documents', protect, authorize('driver'), async (req, res)
 
         // Notify Admins
         try {
+            console.log('🔔 Attempting to notify admins about new documents...');
             const admins = await User.find({ role: 'admin' });
+            console.log(`👤 Found ${admins.length} admin(s) in database.`);
+
             for (const admin of admins) {
+                console.log(`📧 Sending notification to admin: ${admin.email}`);
                 await notificationService.sendAdminDocumentNotification(
                     admin.email,
                     driver.userId.name,
                     driver.userId.email
                 );
             }
-            console.log(`📢 Notified ${admins.length} admins about new documents`);
+            console.log(`📢 Successfully notified ${admins.length} admins.`);
         } catch (notifyError) {
-            console.error('Failed to notify admins:', notifyError);
+            console.error('❌ Failed to notify admins:', notifyError);
+            // Don't fail the request just because notification failed
         }
 
         res.json({
