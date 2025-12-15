@@ -92,7 +92,7 @@ export default function UploadDocuments() {
             console.log('Sending Base64 Payload...'); // Debug
 
             // Use NEW Base64 Endpoint
-            const response = await api.post('/driver/upload-documents-base64', payload);
+            const response = await api.post('/driver-debug/upload', payload);
 
             console.log('Upload successful, refreshing profile...');
             try {
