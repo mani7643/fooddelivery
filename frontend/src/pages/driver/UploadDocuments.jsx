@@ -90,6 +90,7 @@ export default function UploadDocuments() {
             }, {});
 
             console.log('Sending Base64 Payload...'); // Debug
+            // alert('Starting Upload... Please wait.'); // Temporary Debug Alert
 
             // Use NEW Base64 Endpoint
             const response = await api.post('/driver-debug/upload', payload);
@@ -103,13 +104,16 @@ export default function UploadDocuments() {
             }
 
             setSuccess('Documents uploaded successfully! Redirecting...');
+            alert('Upload Success! Check logs now.');
 
             setTimeout(() => {
                 navigate('/driver/verification-pending', { state: { justUploaded: true } });
             }, 2000);
         } catch (err) {
             console.error('Upload Error:', err);
-            setError(err.response?.data?.message || 'Failed to upload documents. Request Rejected.');
+            const errMsg = err.response?.data?.message || err.message || 'Unknown Error';
+            alert(`UPLOAD FAILED:\n${errMsg}\nStatus: ${err.response?.status}`);
+            setError(errMsg);
         } finally {
             setUploading(false);
         }
