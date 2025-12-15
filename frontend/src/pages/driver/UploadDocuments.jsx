@@ -90,13 +90,26 @@ export default function UploadDocuments() {
 
             console.log('Sending Base64 Payload...'); // Debug
 
+            import { driverService } from '../../services/driverService';
+
+            // ... (inside component)
+
+            // ... (inside handleSubmit try block)
             // Use NEW Base64 Endpoint
             const response = await api.post('/driver/upload-documents-base64', payload);
+
+            console.log('Upload successful, refreshing profile...');
+            try {
+                // Force verify status update
+                await driverService.getProfile();
+            } catch (e) {
+                console.warn('Profile refresh failed, proceeding anyway:', e);
+            }
 
             setSuccess('Documents uploaded successfully! Redirecting...');
 
             setTimeout(() => {
-                navigate('/driver/verification-pending');
+                navigate('/driver/verification-pending', { state: { justUploaded: true } });
             }, 2000);
         } catch (err) {
             console.error('Upload Error:', err);

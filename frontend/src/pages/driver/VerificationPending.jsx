@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../../services/api';
 
 export default function VerificationPending() {
     const navigate = useNavigate();
+    const location = useLocation();
     const [verificationStatus, setVerificationStatus] = useState('pending_verification');
     const [loading, setLoading] = useState(true);
 
@@ -25,8 +26,12 @@ export default function VerificationPending() {
                 navigate('/driver');
                 return;
             }
+
             // Only redirect to upload if strictly pending_documents
-            if (status === 'pending_documents') {
+            // AND we didn't just come from a successful upload
+            const justUploaded = location.state?.justUploaded;
+
+            if (status === 'pending_documents' && !justUploaded) {
                 navigate('/driver/upload-documents');
                 return;
             }
