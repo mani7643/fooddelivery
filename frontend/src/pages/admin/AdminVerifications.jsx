@@ -145,29 +145,60 @@ export default function AdminVerifications() {
         }
     }, [viewMode, searchQuery]); // Re-fetch when viewMode or searchQuery changes
 
-    // Socket Listener for Real-time Location Updates
+    // Socket Listener for Real-time Location & Status Updates
     useEffect(() => {
-        if (socket && viewMode === 'online' && !searchQuery) {
-            console.log('Listening for driver location updates...');
-
-            socket.on('driverLocationUpdate', (data) => {
-                // ... (socket logic remains same)
-                const { driverId, location } = data;
-                setOnlineDrivers(prev => {
-                    const exists = prev.find(d => d._id === driverId);
-                    if (exists) {
-                        return prev.map(d =>
-                            d._id === driverId
-                                ? { ...d, currentLocation: { ...d.currentLocation, coordinates: [location.longitude, location.latitude] } }
-                                : d
-                        );
-                    }
-                    return prev;
+        if (socket) {
+            // Location updates
+            if (viewMode === 'online' && !searchQuery) {
+                socket.on('driverLocationUpdate', (data) => {
+                    const { driverId, location } = data;
+                    setOnlineDrivers(prev => {
+                        const exists = prev.find(d => d._id === driverId);
+                        if (exists) {
+                            return prev.map(d =>
+                                d._id === driverId
+                                    ? { ...d, currentLocation: { ...d.currentLocation, coordinates: [location.longitude, location.latitude] } }
+                                    : d
+                            );
+                        }
+                        return prev;
+                    });
                 });
+            }
+
+            // Status updates (Online/Offline)
+            socket.on('driverStatusUpdate', (data) => {
+                const { driverId, isAvailable, driver } = data;
+
+                // Update Online Drivers List
+                setOnlineDrivers(prev => {
+                    if (isAvailable) {
+                        // Add if not exists
+                        const exists = prev.find(d => d._id === driverId);
+                        if (!exists && driver) {
+                            // Driver object structure might match what we need
+                            // Ensure structure matches what render expects
+                            return [...prev, { _id: driverId, ...driver }];
+                        }
+                        return prev;
+                    } else {
+                        // Remove if offline
+                        return prev.filter(d => d._id !== driverId);
+                    }
+                });
+
+                // Update Stats Counter
+                setStats(prev => ({
+                    ...prev,
+                    onlineDrivers: isAvailable
+                        ? prev.onlineDrivers + 1
+                        : Math.max(0, prev.onlineDrivers - 1)
+                }));
             });
 
             return () => {
                 socket.off('driverLocationUpdate');
+                socket.off('driverStatusUpdate');
             };
         }
     }, [socket, viewMode, searchQuery]);

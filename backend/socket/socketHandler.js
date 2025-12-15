@@ -95,8 +95,12 @@ export default function socketHandler(io) {
                 try {
                     await Driver.findByIdAndUpdate(driverId, { isAvailable: false });
                     socketDriverMap.delete(socket.id);
-                    // Optionally emit an event to admin to remove from list immediately
-                    // io.emit('driverOffline', { driverId }); 
+
+                    // Emit to admin to remove from online list
+                    io.emit('driverStatusUpdate', {
+                        driverId,
+                        isAvailable: false
+                    });
                 } catch (error) {
                     console.error('Error updating driver availability on disconnect:', error);
                 }

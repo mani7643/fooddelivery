@@ -86,7 +86,23 @@ router.put('/availability', protect, authorize('driver'), async (req, res) => {
             { userId: req.user._id },
             { isAvailable },
             { new: true }
-        );
+        ).populate('userId', 'name phone');
+
+        // Emit real-time update to admins
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('driverStatusUpdate', {
+                driverId: driver._id,
+                isAvailable: driver.isAvailable,
+                driver: {
+                    userId: driver.userId,
+                    vehicleType: driver.vehicleType,
+                    vehicleNumber: driver.vehicleNumber,
+                    currentLocation: driver.currentLocation,
+                    currentStatus: driver.currentStatus
+                }
+            });
+        }
 
         res.json({ success: true, isAvailable: driver.isAvailable });
     } catch (error) {
