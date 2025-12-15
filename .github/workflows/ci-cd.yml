@@ -135,6 +135,16 @@ jobs:
 
             mkdir -p /home/${{ secrets.EC2_USER }}/app
             cd /home/${{ secrets.EC2_USER }}/app
+
+            # Configure Nginx Client Max Body Size (Fix for 413 Payload Too Large)
+            if command -v nginx &> /dev/null; then
+               echo "Configuring Nginx limit..."
+               # Create a dedicated config file for limits if it doesn't exist
+               echo "client_max_body_size 50M;" | sudo tee /etc/nginx/conf.d/upload_limit.conf
+               # Reload Nginx to apply changes
+               sudo service nginx reload || sudo systemctl reload nginx
+               echo "Nginx reloaded."
+            fi
             
             # Create/Update .env file with secrets
             echo "NODE_ENV=production" > .env
