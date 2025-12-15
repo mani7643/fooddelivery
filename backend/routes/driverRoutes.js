@@ -298,102 +298,145 @@ router.post('/upload-documents-base64', protect, authorize('driver'), async (req
 
         const files = req.body;
 
-        if (!files || Object.keys(files).length === 0) {
-            return res.status(400).json({ message: 'No files provided' });
-        }
 
-        // Initialize S3 Upload
-        console.log('Initializing S3 Upload...');
+        // Debug: In-memory logs
+        export const debugLogs = [];
 
-        const documentUrls = {};
-        const uploadPromises = [];
+        const logDebug = (step, data = null) => {
+            const logEntry = {
+                timestamp: new Date().toISOString(),
+                step,
+                data: data ? JSON.stringify(data, Object.getOwnPropertyNames(data)) : null
+            };
+            console.log(`[UPLOAD DEBUG] ${step}`, data || '');
+            debugLogs.unshift(logEntry); // Add to beginning
+            if (debugLogs.length > 50) debugLogs.pop(); // Keep last 50
+        };
 
-        for (const [key, base64String] of Object.entries(files)) {
-            if (!base64String) continue;
-
-            const matches = base64String.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-            if (!matches || matches.length !== 3) {
-                console.error(`Invalid base64 string for ${key}`);
-                continue;
-            }
-
-            const contentType = matches[1];
-            const buffer = Buffer.from(matches[2], 'base64');
-            const fileExtension = contentType.split('/')[1] || 'bin';
-            const fileName = `${req.user._id}/documents/${key}-${Date.now()}.${fileExtension}`;
-
-            const upload = new Upload({
-                client: s3Client,
-                params: {
-                    Bucket: process.env.AWS_BUCKET_NAME,
-                    Key: fileName,
-                    Body: buffer,
-                    ContentType: contentType
-                }
+        // @route   GET /api/driver/debug-upload-logs
+        // @desc    View upload debug logs
+        // @access  Public (Temporary)
+        router.get('/debug-upload-logs', (req, res) => {
+            res.json({
+                count: debugLogs.length,
+                logs: debugLogs
             });
+        });
 
-            uploadPromises.push(
-                upload.done().then(result => {
-                    documentUrls[key] = result.Location;
-                })
-            );
-        }
+        router.post('/upload-documents-base64', protect, authorize('driver'), async (req, res) => {
+            const requestId = Date.now().toString();
+            logDebug(`[${requestId}] Starting Upload Request`, { user: req.user._id, bodyKeys: Object.keys(req.body) });
 
-        await Promise.all(uploadPromises);
+            try {
+                const files = req.body;
 
-        // Update Driver
-        const driver = await Driver.findOne({ userId: req.user._id });
-        if (!driver) {
-            return res.status(404).json({ message: 'Driver profile not found' });
-        }
+                if (!files || Object.keys(files).length === 0) {
+                    logDebug(`[${requestId}] No files provided`);
+                    return res.status(400).json({ message: 'No files provided' });
+                }
 
-        // Use findByIdAndUpdate to avoid triggering validation on other fields (like regex for vehicle number)
-        // occurring if the user has legacy invalid data.
-        await Driver.findByIdAndUpdate(driver._id, {
-            $set: {
-                documents: { ...driver.documents, ...documentUrls },
-                verificationStatus: 'pending_verification'
+                // Initialize S3 Upload
+                logDebug(`[${requestId}] Initializing S3 Upload...`);
+
+                const documentUrls = {};
+                const uploadPromises = [];
+
+                for (const [key, base64String] of Object.entries(files)) {
+                    if (!base64String) continue;
+
+                    const matches = base64String.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+                    if (!matches || matches.length !== 3) {
+                        logDebug(`[${requestId}] Invalid base64 for ${key}`);
+                        continue;
+                    }
+
+                    const contentType = matches[1];
+                    const buffer = Buffer.from(matches[2], 'base64');
+                    const fileExtension = contentType.split('/')[1] || 'bin';
+                    const fileName = `${req.user._id}/documents/${key}-${Date.now()}.${fileExtension}`;
+
+                    logDebug(`[${requestId}] Preparing upload for ${key}`, { fileName, contentType });
+
+                    const upload = new Upload({
+                        client: s3Client,
+                        params: {
+                            Bucket: process.env.AWS_BUCKET_NAME,
+                            Key: fileName,
+                            Body: buffer,
+                            ContentType: contentType
+                        }
+                    });
+
+                    uploadPromises.push(
+                        upload.done().then(result => {
+                            logDebug(`[${requestId}] Upload Success: ${key}`, { location: result.Location });
+                            documentUrls[key] = result.Location;
+                        }).catch(err => {
+                            logDebug(`[${requestId}] Upload Failed: ${key}`, { error: err.message });
+                            throw err;
+                        })
+                    );
+                }
+
+                await Promise.all(uploadPromises);
+                logDebug(`[${requestId}] All S3 uploads complete`);
+
+                // Update Driver
+                const driver = await Driver.findOne({ userId: req.user._id });
+                if (!driver) {
+                    logDebug(`[${requestId}] Driver not found`, { userId: req.user._id });
+                    return res.status(404).json({ message: 'Driver profile not found' });
+                }
+
+                logDebug(`[${requestId}] Updating DB for driver ${driver._id}`);
+
+                // Use findByIdAndUpdate to avoid triggering validation on other fields
+                const updateResult = await Driver.findByIdAndUpdate(driver._id, {
+                    $set: {
+                        documents: { ...driver.documents, ...documentUrls },
+                        verificationStatus: 'pending_verification'
+                    }
+                }, { new: true }); // Return updated doc
+
+                logDebug(`[${requestId}] DB Update Complete`, { newStatus: updateResult?.verificationStatus, docs: updateResult?.documents });
+
+                res.json({
+                    success: true,
+                    message: 'Documents uploaded successfully (Base64)',
+                    documents: documentUrls
+                });
+
+            } catch (error) {
+                logDebug(`[${requestId}] FATAL ERROR`, { message: error.message, stack: error.stack });
+                console.error('Base64 Upload Error:', error);
+                res.status(500).json({ message: 'Upload failed', error: error.message });
             }
         });
 
-        console.log(`✅ Base64 Documents uploaded for driver: ${driver.name}`);
+        // @route   GET /api/driver/documents
+        // @desc    Get driver documents and verification status
+        // @access  Private (Driver only)
+        router.get('/documents', protect, authorize('driver'), async (req, res) => {
+            try {
+                const driver = await Driver.findOne({ userId: req.user._id });
+                if (!driver) {
+                    return res.status(404).json({ message: 'Driver profile not found' });
+                }
 
-        res.json({
-            success: true,
-            message: 'Documents uploaded successfully (Base64)',
-            documents: documentUrls
+                res.status(200).json({
+                    success: true,
+                    documents: driver.documents,
+                    verificationStatus: driver.verificationStatus,
+                    verificationNotes: driver.verificationNotes,
+                    verifiedAt: driver.verifiedAt
+                });
+            } catch (error) {
+                console.error('Get documents error:', error);
+                res.status(500).json({
+                    message: 'Failed to get documents',
+                    error: error.message
+                });
+            }
         });
 
-    } catch (error) {
-        console.error('Base64 Upload Error:', error);
-        res.status(500).json({ message: 'Upload failed', error: error.message });
-    }
-});
-
-// @route   GET /api/driver/documents
-// @desc    Get driver documents and verification status
-// @access  Private (Driver only)
-router.get('/documents', protect, authorize('driver'), async (req, res) => {
-    try {
-        const driver = await Driver.findOne({ userId: req.user._id });
-        if (!driver) {
-            return res.status(404).json({ message: 'Driver profile not found' });
-        }
-
-        res.status(200).json({
-            success: true,
-            documents: driver.documents,
-            verificationStatus: driver.verificationStatus,
-            verificationNotes: driver.verificationNotes,
-            verifiedAt: driver.verifiedAt
-        });
-    } catch (error) {
-        console.error('Get documents error:', error);
-        res.status(500).json({
-            message: 'Failed to get documents',
-            error: error.message
-        });
-    }
-});
-
-export default router;
+        export default router;
