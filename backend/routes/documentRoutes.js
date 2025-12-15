@@ -25,13 +25,13 @@ router.post('/upload-url', protect, async (req, res) => {
         // Get extension
         const ext = fileName.split('.').pop();
 
-        // Construct key: <userId>/documents/mani-achanta-aadhaarFront.png
+        // Construct key: mani-achanta-documents/mani-achanta-aadhaarFront.png
         // Using docType if available, otherwise fallback to timestamp+filename
         const finalFileName = docType
             ? `${sanitizedUserName}-${docType}.${ext}`
             : `${sanitizedUserName}-${Date.now()}-${fileName}`;
 
-        const key = `${req.user._id}/documents/${finalFileName}`;
+        const key = `${sanitizedUserName}-documents/${finalFileName}`;
 
         const command = new PutObjectCommand({
             Bucket: bucketName,
