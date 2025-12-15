@@ -300,7 +300,8 @@ router.post('/upload-documents-base64', protect, authorize('driver'), async (req
         }
 
         // Import S3 client directly (bypass middleware)
-        const { s3Client } = await import('../middleware/uploadS3.js');
+        // Import S3 client directly (bypass middleware)
+        const { s3: s3Client } = await import('../middleware/uploadS3.js');
         const { Upload } = await import('@aws-sdk/lib-storage');
 
         const documentUrls = {};

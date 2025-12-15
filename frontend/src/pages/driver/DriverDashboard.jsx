@@ -19,7 +19,7 @@ export default function DriverDashboard() {
     const loadData = async () => {
         setLoading(true);
         try {
-            const profileData = await driverService.getDriverProfile();
+            const profileData = await driverService.getProfile();
 
             // Check verification status and redirect if needed
             if (profileData.driver.verificationStatus === 'pending_documents') {
@@ -33,7 +33,23 @@ export default function DriverDashboard() {
 
             const ordersData = await driverService.getActiveOrders();
             setDriver(profileData.driver);
-            setIsAvailable(profileData.driver.isAvailable);
+
+            // Logic to restore online status if persisted
+            const persistedStatus = localStorage.getItem('driver_online_pref') === 'true';
+            const serverStatus = profileData.driver.isAvailable;
+
+            // If user intends to be online but server says offline (likely due to refresh/disconnect),
+            // restore the online status.
+            if (persistedStatus && !serverStatus) {
+                console.log('Restoring online status from preference...');
+                await driverService.toggleAvailability(true);
+                setIsAvailable(true);
+            } else {
+                // Otherwise, respect server status and sync local preference
+                setIsAvailable(serverStatus);
+                localStorage.setItem('driver_online_pref', serverStatus);
+            }
+
             setActiveOrders(ordersData.orders);
         } catch (error) {
             console.error('Error loading data:', error);
@@ -59,6 +75,7 @@ export default function DriverDashboard() {
             const newStatus = !isAvailable;
             await driverService.toggleAvailability(newStatus);
             setIsAvailable(newStatus);
+            localStorage.setItem('driver_online_pref', newStatus);
         } catch (error) {
             console.error('Error toggling availability:', error);
         }

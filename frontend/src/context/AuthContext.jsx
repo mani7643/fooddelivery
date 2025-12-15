@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../services/authService';
 
+import api from '../services/api';
+
 const AuthContext = createContext(null);
 
 export const useAuth = () => {
@@ -36,7 +38,17 @@ export const AuthProvider = ({ children }) => {
         return data;
     };
 
-    const logout = () => {
+    const logout = async () => {
+        try {
+            // If user is a driver, set status to offline before logging out
+            if (user && user.role === 'driver') {
+                await api.put('/driver/availability', { isAvailable: false });
+                localStorage.removeItem('driver_online_pref'); // Clear persistence
+            }
+        } catch (error) {
+            console.error('Error setting offline status on logout:', error);
+        }
+
         authService.logout();
         setUser(null);
     };
