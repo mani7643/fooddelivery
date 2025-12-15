@@ -317,7 +317,7 @@ export default function UploadDocuments() {
                                 Uploading Documents...
                             </span>
                         ) : (
-                            'Submit for Verification'
+                            'Submit for Verification (DEBUG)'
                         )}
                     </button>
                 </form>
