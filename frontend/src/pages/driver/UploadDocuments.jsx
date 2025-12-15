@@ -91,11 +91,6 @@ export default function UploadDocuments() {
 
             console.log('Sending Base64 Payload...'); // Debug
 
-            import { driverService } from '../../services/driverService';
-
-            // ... (inside component)
-
-            // ... (inside handleSubmit try block)
             // Use NEW Base64 Endpoint
             const response = await api.post('/driver/upload-documents-base64', payload);
 
