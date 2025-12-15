@@ -178,22 +178,31 @@ export default function VerificationPending() {
                     </div>
                 </div>
 
-                {/* Status Badge */}
-                <div style={{ textAlign: 'center' }}>
-                    <div style={{
-                        display: 'inline-block',
-                        padding: 'var(--space-2) var(--space-4)',
-                        background: 'rgba(234, 179, 8, 0.1)',
-                        border: '1px solid rgb(234, 179, 8)',
-                        borderRadius: 'var(--radius-full)',
-                        color: 'rgb(234, 179, 8)',
-                        fontSize: 'var(--font-size-sm)',
-                        fontWeight: 'var(--font-weight-medium)'
-                    }}>
-                        Status: {verificationStatus === 'pending_verification' ? 'Under Review' : verificationStatus}
-                    </div>
-                </div>
             </div>
         </div>
+
+                {/* DEBUG: Reset Button */ }
+    <div style={{ textAlign: 'center', marginTop: 'var(--space-4)' }}>
+        <button
+            onClick={async () => {
+                if (!window.confirm('Reset status to pending_documents?')) return;
+                try {
+                    await api.put('/driver-debug/reset');
+                    window.location.reload();
+                } catch (e) { alert(e.message); }
+            }}
+            style={{
+                padding: '10px 20px',
+                background: '#ef4444',
+                color: 'white',
+                borderRadius: '8px',
+                cursor: 'pointer'
+            }}
+        >
+            [DEBUG] RESET STATUS & RETRY UPLOAD
+        </button>
+    </div>
+            </div >
+        </div >
     );
 }

@@ -185,4 +185,26 @@ router.post('/upload',
         }
     });
 
+// @route   PUT /api/driver-debug/reset
+// @desc    Force reset driver status to pending_documents (Debug only)
+// @access  Private
+router.put('/reset', protect, authorize('driver'), async (req, res) => {
+    try {
+        const driver = await Driver.findOneAndUpdate(
+            { userId: req.user._id },
+            {
+                $set: {
+                    verificationStatus: 'pending_documents',
+                    documents: {} // Clear old docs
+                }
+            },
+            { new: true }
+        );
+        logDebug(`[Reset] Driver ${driver.name} status reset to pending_documents`);
+        res.json({ success: true, status: driver.verificationStatus });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;
