@@ -6,15 +6,13 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import fs from 'fs';
 
 // Import routes
 import authRoutes from './routes/authRoutes.js';
 import driverRoutes from './routes/driverRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
-import documentRoutes from './routes/documentRoutes.js';
-import debugDriverRoutes from './routes/debugDriverRoutes.js'; // Debug routes
+import documentRoutes from './routes/documentRoutes.js'; // Added document routes
 
 // Import socket handler
 import socketHandler from './socket/socketHandler.js';
@@ -65,18 +63,6 @@ export let lastPostRequest = null; // Track POST specifically
 
 app.use((req, res, next) => {
     console.log(`🌍 [Global Log] ${req.method} ${req.url}`);
-
-    // --- DEBUG: LOG TO FILE FOR DIAGNOSIS ---
-    // Capture ALL requests to the debug file to see if /upload is hitting server
-    try {
-        const debugFile = path.join(process.cwd(), 'debug_driver.log');
-        const logLine = `[global-middleware] ${req.method} ${req.url} (Body: ${req.headers['content-length']} bytes)\n`;
-        // Use sync to ensure write
-        fs.appendFileSync(debugFile, logLine);
-    } catch (e) {
-        // Ignore fs errors
-    }
-    // ----------------------------------------
 
     const logData = {
         method: req.method,
@@ -135,8 +121,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/driver', driverRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/documents', documentRoutes);
-app.use('/api/driver-debug', debugDriverRoutes); // Mount debug routes
+app.use('/api/documents', documentRoutes); // Register document routes
 
 // Root route
 app.get('/', (req, res) => {

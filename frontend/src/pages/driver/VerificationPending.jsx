@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 
 export default function VerificationPending() {
     const navigate = useNavigate();
-    const location = useLocation();
     const [verificationStatus, setVerificationStatus] = useState('pending_verification');
     const [loading, setLoading] = useState(true);
 
@@ -26,12 +25,8 @@ export default function VerificationPending() {
                 navigate('/driver');
                 return;
             }
-
             // Only redirect to upload if strictly pending_documents
-            // AND we didn't just come from a successful upload
-            const justUploaded = location.state?.justUploaded;
-
-            if (status === 'pending_documents' && !justUploaded) {
+            if (status === 'pending_documents') {
                 navigate('/driver/upload-documents');
                 return;
             }
@@ -179,7 +174,7 @@ export default function VerificationPending() {
                 </div>
 
                 {/* Status Badge */}
-                <div style={{ textAlign: 'center', marginBottom: 'var(--space-4)' }}>
+                <div style={{ textAlign: 'center' }}>
                     <div style={{
                         display: 'inline-block',
                         padding: 'var(--space-2) var(--space-4)',
@@ -193,30 +188,7 @@ export default function VerificationPending() {
                         Status: {verificationStatus === 'pending_verification' ? 'Under Review' : verificationStatus}
                     </div>
                 </div>
-
-                {/* DEBUG: Reset Button */}
-                <div style={{ textAlign: 'center', marginTop: 'var(--space-4)' }}>
-                    <button
-                        onClick={async () => {
-                            if (!window.confirm('Reset status to pending_documents?')) return;
-                            try {
-                                await api.put('/driver-debug/reset');
-                                // Force navigate to upload page, clearing the 'justUploaded' state
-                                navigate('/driver/upload-documents', { replace: true, state: {} });
-                            } catch (e) { alert(e.message); }
-                        }}
-                        style={{
-                            padding: '10px 20px',
-                            background: '#ef4444',
-                            color: 'white',
-                            borderRadius: '8px',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        [DEBUG] RESET STATUS & RETRY UPLOAD
-                    </button>
-                </div>
-            </div >
-        </div >
+            </div>
+        </div>
     );
 }
