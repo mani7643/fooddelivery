@@ -342,30 +342,43 @@ router.post('/confirm-documents', protect, authorize('driver'), async (req, res)
         console.log(`✅ Documents confirmed for driver: ${driver.name} (Direct Upload)`);
 
         // Notify Admins
+        let notificationResult = "Not attempted";
         try {
             console.log('🔔 Attempting to notify admins about new documents...');
             const admins = await User.find({ role: 'admin' });
             console.log(`👤 Found ${admins.length} admin(s) in database.`);
 
-            for (const admin of admins) {
-                console.log(`📧 Sending notification to admin: ${admin.email}`);
-                await notificationService.sendAdminDocumentNotification(
-                    admin.email,
-                    driver.userId.name,
-                    driver.userId.email
-                );
+            if (admins.length === 0) {
+                notificationResult = "No admins found in DB";
+            } else {
+                const results = [];
+                for (const admin of admins) {
+                    try {
+                        console.log(`📧 Sending notification to admin: ${admin.email}`);
+                        await notificationService.sendAdminDocumentNotification(
+                            admin.email,
+                            driver.userId.name,
+                            driver.userId.email
+                        );
+                        results.push(`Sent to ${admin.email}`);
+                    } catch (err) {
+                        results.push(`Failed to ${admin.email}: ${err.message}`);
+                    }
+                }
+                notificationResult = results.join(', ');
+                console.log(`📢 Notification Summary: ${notificationResult}`);
             }
-            console.log(`📢 Successfully notified ${admins.length} admins.`);
         } catch (notifyError) {
             console.error('❌ Failed to notify admins:', notifyError);
-            // Don't fail the request just because notification failed
+            notificationResult = `Error: ${notifyError.message}`;
         }
 
         res.json({
             success: true,
             message: 'Documents confirmed and profile updated',
             documents: documentUrls,
-            verificationStatus: 'pending_verification'
+            verificationStatus: 'pending_verification',
+            debugNotification: notificationResult
         });
 
     } catch (error) {
