@@ -70,108 +70,119 @@ router.get('/logs', (req, res) => {
 // @route   POST /api/driver-debug/upload
 // @desc    Debug version of upload documents
 // @access  Private (Driver only)
-router.post('/upload', protect, authorize('driver'), async (req, res) => {
-    const requestId = Date.now().toString();
-    logDebug(`[${requestId}] Starting Upload Request`, { user: req.user._id, bodyKeys: Object.keys(req.body) });
-
-    try {
-        const files = req.body;
-
-        if (!files || Object.keys(files).length === 0) {
-            logDebug(`[${requestId}] No files provided`);
-            return res.status(400).json({ message: 'No files provided' });
-        }
-
-        // Initialize S3 Upload
-        logDebug(`[${requestId}] Initializing S3 Upload...`);
-        // Check env vars
-        logDebug(`[${requestId}] Env Check`, {
-            region: process.env.AWS_REGION,
-            bucket: process.env.AWS_BUCKET_NAME
+router.post('/upload',
+    // 1. Log arrival BEFORE Auth
+    (req, res, next) => {
+        logDebug(`[Pre-Auth] Request hit /upload endpoint`, {
+            headers: Object.keys(req.headers),
+            contentLength: req.headers['content-length']
         });
+        next();
+    },
+    protect,
+    authorize('driver'),
+    async (req, res) => {
+        const requestId = Date.now().toString();
+        logDebug(`[${requestId}] Starting Upload Request`, { user: req.user._id, bodyKeys: Object.keys(req.body) });
 
-        const documentUrls = {};
-        const uploadPromises = [];
+        try {
+            const files = req.body;
 
-        for (const [key, base64String] of Object.entries(files)) {
-            if (!base64String) continue;
-
-            // Simple validation used in frontend
-            const matches = base64String.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-            if (!matches || matches.length !== 3) {
-                logDebug(`[${requestId}] Invalid base64 for ${key} (Length: ${base64String.length})`);
-                continue;
+            if (!files || Object.keys(files).length === 0) {
+                logDebug(`[${requestId}] No files provided`);
+                return res.status(400).json({ message: 'No files provided' });
             }
 
-            const contentType = matches[1];
-            const buffer = Buffer.from(matches[2], 'base64');
-            const fileExtension = contentType.split('/')[1] || 'bin';
-            const fileName = `${req.user._id}/documents/${key}-${Date.now()}.${fileExtension}`;
-
-            logDebug(`[${requestId}] Preparing upload for ${key}`, { fileName, contentType, size: buffer.length });
-
-            const upload = new Upload({
-                client: s3Client,
-                params: {
-                    Bucket: process.env.AWS_BUCKET_NAME,
-                    Key: fileName,
-                    Body: buffer,
-                    ContentType: contentType
-                }
+            // Initialize S3 Upload
+            logDebug(`[${requestId}] Initializing S3 Upload...`);
+            // Check env vars
+            logDebug(`[${requestId}] Env Check`, {
+                region: process.env.AWS_REGION,
+                bucket: process.env.AWS_BUCKET_NAME
             });
 
-            uploadPromises.push(
-                upload.done().then(result => {
-                    logDebug(`[${requestId}] Upload Success: ${key}`, { location: result.Location });
-                    documentUrls[key] = result.Location;
-                }).catch(err => {
-                    logDebug(`[${requestId}] Upload Failed: ${key}`, { error: err.message, stack: err.stack });
-                    throw err; // Re-throw to be caught by Promise.all
-                })
-            );
-        }
+            const documentUrls = {};
+            const uploadPromises = [];
 
-        if (uploadPromises.length === 0) {
-            logDebug(`[${requestId}] No valid files found to upload`);
-            return res.status(400).json({ message: 'No valid files to upload' });
-        }
+            for (const [key, base64String] of Object.entries(files)) {
+                if (!base64String) continue;
 
-        await Promise.all(uploadPromises);
-        logDebug(`[${requestId}] All S3 uploads complete`);
+                // Simple validation used in frontend
+                const matches = base64String.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+                if (!matches || matches.length !== 3) {
+                    logDebug(`[${requestId}] Invalid base64 for ${key} (Length: ${base64String.length})`);
+                    continue;
+                }
 
-        // Update Driver
-        const driver = await Driver.findOne({ userId: req.user._id });
-        if (!driver) {
-            logDebug(`[${requestId}] Driver not found`, { userId: req.user._id });
-            return res.status(404).json({ message: 'Driver profile not found' });
-        }
+                const contentType = matches[1];
+                const buffer = Buffer.from(matches[2], 'base64');
+                const fileExtension = contentType.split('/')[1] || 'bin';
+                const fileName = `${req.user._id}/documents/${key}-${Date.now()}.${fileExtension}`;
 
-        logDebug(`[${requestId}] Updating DB for driver ${driver._id}`);
+                logDebug(`[${requestId}] Preparing upload for ${key}`, { fileName, contentType, size: buffer.length });
 
-        // Use findByIdAndUpdate to avoid triggering validation on other fields
-        const updateResult = await Driver.findByIdAndUpdate(driver._id, {
-            $set: {
-                documents: { ...driver.documents, ...documentUrls },
-                verificationStatus: 'pending_verification'
+                const upload = new Upload({
+                    client: s3Client,
+                    params: {
+                        Bucket: process.env.AWS_BUCKET_NAME,
+                        Key: fileName,
+                        Body: buffer,
+                        ContentType: contentType
+                    }
+                });
+
+                uploadPromises.push(
+                    upload.done().then(result => {
+                        logDebug(`[${requestId}] Upload Success: ${key}`, { location: result.Location });
+                        documentUrls[key] = result.Location;
+                    }).catch(err => {
+                        logDebug(`[${requestId}] Upload Failed: ${key}`, { error: err.message, stack: err.stack });
+                        throw err; // Re-throw to be caught by Promise.all
+                    })
+                );
             }
-        }, { new: true }); // Return updated doc
 
-        logDebug(`[${requestId}] DB Update Complete`, {
-            newStatus: updateResult?.verificationStatus,
-            docs: updateResult?.documents
-        });
+            if (uploadPromises.length === 0) {
+                logDebug(`[${requestId}] No valid files found to upload`);
+                return res.status(400).json({ message: 'No valid files to upload' });
+            }
 
-        res.json({
-            success: true,
-            message: 'Documents uploaded successfully (Base64)',
-            documents: documentUrls
-        });
+            await Promise.all(uploadPromises);
+            logDebug(`[${requestId}] All S3 uploads complete`);
 
-    } catch (error) {
-        logDebug(`[${requestId}] FATAL ERROR`, { message: error.message, stack: error.stack });
-        console.error('Base64 Upload Error:', error);
-        res.status(500).json({ message: 'Upload failed', error: error.message });
-    }
-});
+            // Update Driver
+            const driver = await Driver.findOne({ userId: req.user._id });
+            if (!driver) {
+                logDebug(`[${requestId}] Driver not found`, { userId: req.user._id });
+                return res.status(404).json({ message: 'Driver profile not found' });
+            }
+
+            logDebug(`[${requestId}] Updating DB for driver ${driver._id}`);
+
+            // Use findByIdAndUpdate to avoid triggering validation on other fields
+            const updateResult = await Driver.findByIdAndUpdate(driver._id, {
+                $set: {
+                    documents: { ...driver.documents, ...documentUrls },
+                    verificationStatus: 'pending_verification'
+                }
+            }, { new: true }); // Return updated doc
+
+            logDebug(`[${requestId}] DB Update Complete`, {
+                newStatus: updateResult?.verificationStatus,
+                docs: updateResult?.documents
+            });
+
+            res.json({
+                success: true,
+                message: 'Documents uploaded successfully (Base64)',
+                documents: documentUrls
+            });
+
+        } catch (error) {
+            logDebug(`[${requestId}] FATAL ERROR`, { message: error.message, stack: error.stack });
+            console.error('Base64 Upload Error:', error);
+            res.status(500).json({ message: 'Upload failed', error: error.message });
+        }
+    });
 
 export default router;
