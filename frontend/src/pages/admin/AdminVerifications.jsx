@@ -130,7 +130,9 @@ export default function AdminVerifications() {
     }, []);
 
     useEffect(() => {
-        if (viewMode === 'verifications') {
+        if (searchQuery.trim()) {
+            fetchGlobalSearch();
+        } else if (viewMode === 'verifications') {
             fetchPendingDrivers();
         } else if (viewMode === 'verified') {
             fetchVerifiedDrivers();
@@ -145,26 +147,22 @@ export default function AdminVerifications() {
 
     // Socket Listener for Real-time Location Updates
     useEffect(() => {
-        if (socket && viewMode === 'online') {
+        if (socket && viewMode === 'online' && !searchQuery) {
             console.log('Listening for driver location updates...');
 
             socket.on('driverLocationUpdate', (data) => {
+                // ... (socket logic remains same)
                 const { driverId, location } = data;
                 setOnlineDrivers(prev => {
-                    // Check if driver exists in list
                     const exists = prev.find(d => d._id === driverId);
                     if (exists) {
-                        // Update location
                         return prev.map(d =>
                             d._id === driverId
                                 ? { ...d, currentLocation: { ...d.currentLocation, coordinates: [location.longitude, location.latitude] } }
                                 : d
                         );
-                    } else {
-                        // Optionally fetch full driver details if new, or ignore until refresh
-                        // For now, we prefer not to add incomplete driver objects
-                        return prev;
                     }
+                    return prev;
                 });
             });
 
@@ -172,7 +170,7 @@ export default function AdminVerifications() {
                 socket.off('driverLocationUpdate');
             };
         }
-    }, [socket, viewMode]);
+    }, [socket, viewMode, searchQuery]);
 
     const fetchStats = async () => {
         try {
@@ -183,11 +181,27 @@ export default function AdminVerifications() {
         }
     };
 
+    const fetchGlobalSearch = async () => {
+        setLoading(true);
+        try {
+            // Global search across all statuses
+            const response = await api.get(`/admin/drivers?search=${searchQuery}`);
+            setDrivers(response.data.drivers || []);
+            // Also reset online drivers if needed, or search them separately? 
+            // The main list 'drivers' is what is shown for most tabs. 
+            // If the user wants to see results, we should probably render 'drivers' list even if viewMode was 'online'.
+            // For simplicity, we populate 'drivers' and maybe force a view that renders 'drivers'.
+        } catch (error) {
+            console.error('Error searching drivers:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const fetchPendingDrivers = async () => {
         setLoading(true);
         try {
-            const url = searchQuery ? `/admin/drivers?status=pending_verification&search=${searchQuery}` : '/admin/pending-verifications';
-            const response = await api.get(url);
+            const response = await api.get('/admin/pending-verifications');
             setDrivers(response.data.drivers || []);
         } catch (error) {
             console.error('Error fetching drivers:', error);
@@ -381,9 +395,10 @@ export default function AdminVerifications() {
                     marginBottom: 'var(--space-8)',
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    position: 'relative', // Ensure context for z-index
-                    zIndex: 20
+                    alignItems: 'center',
+                    position: 'relative',
+                    zIndex: 20,
+                    gap: 'var(--space-4)'
                 }}>
                     <div>
                         <h1 className="text-4xl font-bold" style={{
@@ -399,75 +414,56 @@ export default function AdminVerifications() {
                         </p>
                     </div>
 
-                    <button
-                        type="button" // Explicit type
-                        onClick={handleLogout}
-                        className="btn"
-                        style={{
-                            background: 'var(--surface-raised)',
-                            color: 'var(--danger-400)',
-                            border: '1px solid var(--border-color)',
-                            padding: 'var(--space-3) var(--space-6)',
-                            fontWeight: 'var(--font-weight-medium)',
-                            boxShadow: 'var(--shadow-sm)',
-                            cursor: 'pointer',
-                            position: 'relative', // Bring to front
-                            zIndex: 50 // Ensure clickable
-                        }}
-                    >
-                        Sign Out
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+                        {/* SEARCH BAR (Moved here) */}
+                        <div className="glass" style={{
+                            padding: '4px 12px',
+                            borderRadius: 'var(--radius-full)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 'var(--space-2)',
+                            width: '250px' // Small fixed width
+                        }}>
+                            <span style={{ fontSize: '1rem' }}>🔍</span>
+                            <input
+                                type="text"
+                                placeholder="Search..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                style={{
+                                    border: 'none',
+                                    background: 'transparent',
+                                    color: 'var(--text-primary)',
+                                    width: '100%',
+                                    padding: 'var(--space-2) 0',
+                                    outline: 'none',
+                                    fontSize: '0.9rem'
+                                }}
+                            />
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={handleLogout}
+                            className="btn"
+                            style={{
+                                background: 'var(--surface-raised)',
+                                color: 'var(--danger-400)',
+                                border: '1px solid var(--border-color)',
+                                padding: 'var(--space-3) var(--space-6)',
+                                fontWeight: 'var(--font-weight-medium)',
+                                boxShadow: 'var(--shadow-sm)',
+                                cursor: 'pointer',
+                                position: 'relative',
+                                zIndex: 50
+                            }}
+                        >
+                            Sign Out
+                        </button>
+                    </div>
                 </div>
 
                 {/* Stats Bar */}
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                    gap: 'var(--space-4)',
-                    marginBottom: 'var(--space-6)'
-                }}>
-                    <div className="glass" style={{ padding: 'var(--space-4)', borderRadius: 'var(--radius-lg)' }}>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Total Drivers</p>
-                        <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.totalDrivers}</p>
-                    </div>
-                    <div className="glass" style={{ padding: 'var(--space-4)', borderRadius: 'var(--radius-lg)' }}>
-                        <p style={{ color: 'var(--warning-400)', fontSize: '0.9rem' }}>Pending</p>
-                        <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.pendingVerification}</p>
-                    </div>
-                    <div className="glass" style={{ padding: 'var(--space-4)', borderRadius: 'var(--radius-lg)' }}>
-                        <p style={{ color: 'var(--success-400)', fontSize: '0.9rem' }}>Verified</p>
-                        <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.verifiedDrivers}</p>
-                    </div>
-                    <div className="glass" style={{ padding: 'var(--space-4)', borderRadius: 'var(--radius-lg)' }}>
-                        <p style={{ color: 'var(--danger-400)', fontSize: '0.9rem' }}>Rejected</p>
-                        <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.rejectedDrivers}</p>
-                    </div>
-                </div>
-
-                {/* Search Bar */}
-                <div className="glass" style={{
-                    padding: 'var(--space-4)',
-                    borderRadius: 'var(--radius-lg)',
-                    marginBottom: 'var(--space-6)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--space-4)'
-                }}>
-                    <input
-                        type="text"
-                        placeholder="Search drivers by name, email, or phone..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        style={{
-                            flex: 1,
-                            padding: 'var(--space-3)',
-                            borderRadius: 'var(--radius-md)',
-                            border: '1px solid var(--border-color)',
-                            background: 'var(--bg-primary)',
-                            color: 'var(--text-primary)'
-                        }}
-                    />
-                </div>
 
                 {/* Tabs */}
                 <div style={{
@@ -598,8 +594,8 @@ export default function AdminVerifications() {
                     </div>
                 ) : (
                     <>
-                        {/* DRIVER VERIFICATIONS LIST & VERIFIED LIST & REJECTED LIST */}
-                        {(viewMode === 'verifications' || viewMode === 'verified' || viewMode === 'rejected') && (
+                        {/* DRIVER VERIFICATIONS LIST & VERIFIED LIST & REJECTED LIST & SEARCH RESULTS */}
+                        {(viewMode === 'verifications' || viewMode === 'verified' || viewMode === 'rejected' || ((viewMode === 'online' || viewMode === 'admins') && searchQuery)) && (
                             drivers.length === 0 ? (
                                 <div className="glass" style={{
                                     padding: 'var(--space-12)',
@@ -613,7 +609,14 @@ export default function AdminVerifications() {
                                         {viewMode === 'verifications' ? 'All Drivers Verified!' : viewMode === 'verified' ? 'No Verified Drivers Found' : 'No Rejected Drivers'}
                                     </h3>
                                     <p style={{ color: 'var(--text-secondary)' }}>
-                                        {viewMode === 'verifications' ? 'No pending driver verifications at the moment.' : viewMode === 'verified' ? 'No drivers have been verified yet.' : 'No drivers currently rejected.'}
+                                        {searchQuery
+                                            ? 'No drivers found matching your search.'
+                                            : viewMode === 'verifications'
+                                                ? 'No pending driver verifications at the moment.'
+                                                : viewMode === 'verified'
+                                                    ? 'No drivers have been verified yet.'
+                                                    : 'No drivers currently rejected.'
+                                        }
                                     </p>
                                 </div>
                             ) : (

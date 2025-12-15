@@ -84,6 +84,7 @@ router.get('/stats', protect, authorize('admin'), async (req, res) => {
         const pendingVerification = await Driver.countDocuments({ verificationStatus: 'pending_verification' });
         const verifiedDrivers = await Driver.countDocuments({ verificationStatus: 'verified' });
         const rejectedDrivers = await Driver.countDocuments({ verificationStatus: 'rejected' });
+        const onlineDrivers = await Driver.countDocuments({ verificationStatus: 'verified', isAvailable: true });
 
         res.json({
             success: true,
@@ -92,7 +93,8 @@ router.get('/stats', protect, authorize('admin'), async (req, res) => {
                 totalDrivers,
                 pendingVerification,
                 verifiedDrivers,
-                rejectedDrivers
+                rejectedDrivers,
+                onlineDrivers
             }
         });
     } catch (error) {
