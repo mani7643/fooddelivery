@@ -201,7 +201,8 @@ export default function VerificationPending() {
                             if (!window.confirm('Reset status to pending_documents?')) return;
                             try {
                                 await api.put('/driver-debug/reset');
-                                window.location.reload();
+                                // Force navigate to upload page, clearing the 'justUploaded' state
+                                navigate('/driver/upload-documents', { replace: true, state: {} });
                             } catch (e) { alert(e.message); }
                         }}
                         style={{
