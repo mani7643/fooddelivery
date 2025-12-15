@@ -433,6 +433,20 @@ router.post('/upload-documents-base64', protect, authorize('driver'), async (req
 
         console.log(`✅ Base64 Documents uploaded for driver: ${driver.name}`);
 
+        // Notify Admins
+        try {
+            const admins = await User.find({ role: 'admin' });
+            for (const admin of admins) {
+                await notificationService.sendAdminDocumentNotification(
+                    admin.email,
+                    driver.userId.name,
+                    driver.userId.email
+                );
+            }
+        } catch (notifyError) {
+            console.error('Failed to notify admins:', notifyError);
+        }
+
         res.json({
             success: true,
             message: 'Documents uploaded successfully (Base64)',

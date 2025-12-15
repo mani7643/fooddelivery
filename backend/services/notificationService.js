@@ -326,6 +326,49 @@ class NotificationService {
         return Promise.resolve(true);
     }
 
+    async sendAdminDocumentNotification(adminEmail, driverName, driverEmail) {
+        const subject = `📢 New Documents Uploaded: ${driverName}`;
+        const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f5f5f5;">
+                <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h2 style="color: #4F46E5; text-align: center; margin-bottom: 20px;">📄 New Documents to Verify</h2>
+                    <p style="color: #666; font-size: 16px;">Hello Admin,</p>
+                    <p style="color: #666; font-size: 16px;">Driver <strong>${driverName}</strong> (${driverEmail}) has uploaded their verification documents.</p>
+                    
+                    <div style="background: #e0e7ff; padding: 20px; border-radius: 8px; border-left: 4px solid #4f46e5; margin: 30px 0;">
+                        <p style="color: #3730a3; font-size: 16px; margin: 0; font-weight: bold;">Action Required:</p>
+                        <p style="color: #3730a3; font-size: 14px; margin: 5px 0 0 0;">Please review the documents in the admin dashboard.</p>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/admin" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: bold; display: inline-block;">
+                            Go to Admin Dashboard
+                        </a>
+                    </div>
+                </div>
+                <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">
+                    This is an automated notification.
+                </p>
+            </div>
+        `;
+
+        if (this.transporter) {
+            try {
+                await this.transporter.sendMail({
+                    from: '"Courier Platform" <no-reply@courier.com>',
+                    to: adminEmail,
+                    subject,
+                    html
+                });
+                console.log(`✅ Admin notification sent to ${adminEmail}`);
+            } catch (error) {
+                console.error(`❌ Error notifying admin ${adminEmail}:`, error.message);
+            }
+        } else {
+            this.logEmailToConsole(adminEmail, subject, `Driver ${driverName} uploaded documents`);
+        }
+    }
+
     logEmailToConsole(to, subject, body) {
         console.log('📧 ================= EMAIL SENT ================= 📧');
         console.log(`To: ${to}`);
