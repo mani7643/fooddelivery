@@ -1,10 +1,47 @@
 import express from 'express';
 import { protect, authorize } from '../middleware/authMiddleware.js';
-import { CreateBucketCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { CreateBucketCommand, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { s3 } from '../middleware/uploadS3.js';
 
 const router = express.Router();
+
+// @route   POST /api/documents/upload-url
+// @desc    Generate a presigned URL for uploading a private S3 object
+// @access  Private (Admin or Driver)
+router.post('/upload-url', protect, async (req, res) => {
+    try {
+        const { fileName, contentType } = req.body;
+
+        if (!fileName || !contentType) {
+            return res.status(400).json({ message: 'File name and content type are required' });
+        }
+
+        const bucketName = process.env.AWS_BUCKET_NAME;
+        // Construct a unique key: <userId>/documents/<timestamp>-<filename>
+        const key = `${req.user._id}/documents/${Date.now()}-${fileName}`;
+
+        const command = new PutObjectCommand({
+            Bucket: bucketName,
+            Key: key,
+            ContentType: contentType
+        });
+
+        // Generate signed URL valid for 5 minutes
+        const signedUrl = await getSignedUrl(s3, command, { expiresIn: 300 });
+
+        res.json({
+            success: true,
+            signedUrl,
+            key, // Frontend needs this key to send back to the server after upload
+            fileUrl: `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}` // Optional full URL hint
+        });
+
+    } catch (error) {
+        console.error('Error generating upload URL:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
 
 // @route   POST /api/documents/sign-url
 // @desc    Generate a presigned URL for accessing a private S3 object

@@ -284,6 +284,60 @@ router.post('/upload-documents', protect, authorize('driver'), (req, res, next) 
     }
 });
 
+// @route   POST /api/driver/confirm-documents
+// @desc    Confirm document uploads (after direct S3 upload) and update driver profile
+// @access  Private (Driver only)
+router.post('/confirm-documents', protect, authorize('driver'), async (req, res) => {
+    try {
+        const { documents } = req.body; // Expects object: { aadhaarFront: 'key...', ... }
+
+        if (!documents || Object.keys(documents).length === 0) {
+            return res.status(400).json({ message: 'No document keys provided' });
+        }
+
+        const driver = await Driver.findOne({ userId: req.user._id });
+        if (!driver) {
+            return res.status(404).json({ message: 'Driver profile not found' });
+        }
+
+        const bucketName = process.env.AWS_BUCKET_NAME;
+        const region = process.env.AWS_REGION;
+
+        // Construct full S3 URLs from keys
+        const documentUrls = {};
+        for (const [docName, key] of Object.entries(documents)) {
+            // If the key is already a full URL (e.g. from previous uploads), keep it. 
+            // Otherwise, construct the URL.
+            if (key.startsWith('http')) {
+                documentUrls[docName] = key;
+            } else {
+                documentUrls[docName] = `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
+            }
+        }
+
+        // Update driver profile
+        await Driver.findByIdAndUpdate(driver._id, {
+            $set: {
+                documents: { ...driver.documents, ...documentUrls },
+                verificationStatus: 'pending_verification'
+            }
+        });
+
+        console.log(`✅ Documents confirmed for driver: ${driver.name} (Direct Upload)`);
+
+        res.json({
+            success: true,
+            message: 'Documents confirmed and profile updated',
+            documents: documentUrls,
+            verificationStatus: 'pending_verification'
+        });
+
+    } catch (error) {
+        console.error('Confirm documents error:', error);
+        res.status(500).json({ message: 'Failed to confirm documents', error: error.message });
+    }
+});
+
 // @route   POST /api/driver/upload-documents-base64
 // @desc    Upload driver verification documents (Base64 JSON bypass)
 // @access  Private (Driver only)

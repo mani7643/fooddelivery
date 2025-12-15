@@ -67,31 +67,49 @@ export default function UploadDocuments() {
         setUploading(true);
 
         try {
-            // Convert files to Base64
-            const filePromises = Object.keys(files).map(key => {
-                return new Promise((resolve, reject) => {
-                    const file = files[key];
-                    if (!file) {
-                        resolve({ key, data: null });
-                        return;
-                    }
-                    const reader = new FileReader();
-                    reader.onload = () => resolve({ key, data: reader.result }); // reader.result is Data URL
-                    reader.onerror = reject;
-                    reader.readAsDataURL(file);
+            const uploadedKeys = {};
+
+            // Steps:
+            // 1. Get Presigned URL for each file
+            // 2. Upload file directly to S3 (PUT)
+            // 3. Confirm upload with backend
+
+            const uploadPromises = Object.keys(files).map(async (key) => {
+                const file = files[key];
+                if (!file) return;
+
+                // Step 1: Get Signed URL
+                console.log(`Step 1: Getting signed URL for ${key}`);
+                const signResponse = await api.post('/documents/upload-url', {
+                    fileName: file.name,
+                    contentType: file.type
                 });
+
+                const { signedUrl, key: s3Key } = signResponse.data;
+
+                // Step 2: Upload to S3 directly (bypass backend)
+                console.log(`Step 2: Uploading ${key} to S3...`);
+                // Note: Use fetch or axios without default headers to avoid auth issues with S3
+                // Using axios but creating a fresh instance or just fetch to be safe
+                await fetch(signedUrl, {
+                    method: 'PUT',
+                    body: file,
+                    headers: {
+                        'Content-Type': file.type
+                    }
+                });
+
+                uploadedKeys[key] = s3Key;
             });
 
-            const results = await Promise.all(filePromises);
-            const payload = results.reduce((acc, { key, data }) => {
-                if (data) acc[key] = data;
-                return acc;
-            }, {});
+            await Promise.all(uploadPromises);
 
-            console.log('Sending Base64 Payload...'); // Debug
+            console.log('Step 3: Confirming uploads with backend...', uploadedKeys);
 
-            // Use NEW Base64 Endpoint
-            const response = await api.post('/driver/upload-documents-base64', payload);
+            // Step 3: Confirm documents
+            await api.post('/driver/confirm-documents', {
+                documents: uploadedKeys
+            });
 
             setSuccess('Documents uploaded successfully! Redirecting...');
 
@@ -99,8 +117,8 @@ export default function UploadDocuments() {
                 navigate('/driver/verification-pending');
             }, 2000);
         } catch (err) {
-            console.error('Upload Error:', err);
-            setError(err.response?.data?.message || 'Failed to upload documents. Request Rejected.');
+            console.error('Upload Process Error:', err);
+            setError(err.response?.data?.message || err.message || 'Failed to upload documents.');
         } finally {
             setUploading(false);
         }
