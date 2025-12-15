@@ -11,7 +11,7 @@ const router = express.Router();
 // @access  Private (Admin or Driver)
 router.post('/upload-url', protect, async (req, res) => {
     try {
-        const { fileName, contentType } = req.body;
+        const { fileName, contentType, docType } = req.body;
 
         if (!fileName || !contentType) {
             return res.status(400).json({ message: 'File name and content type are required' });
@@ -19,11 +19,19 @@ router.post('/upload-url', protect, async (req, res) => {
 
         const bucketName = process.env.AWS_BUCKET_NAME;
 
-        // Sanitize user name (replace spaces with underscores, remove non-alphanumeric)
-        const sanitizedUserName = req.user.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+        // Sanitize user name (lowercase, underscores replaced by hyphens)
+        const sanitizedUserName = req.user.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
-        // Construct a unique key: <userId>/documents/<UserName>_<timestamp>_<filename>
-        const key = `${req.user._id}/documents/${sanitizedUserName}_${Date.now()}_${fileName}`;
+        // Get extension
+        const ext = fileName.split('.').pop();
+
+        // Construct key: <userId>/documents/mani-achanta-aadhaarFront.png
+        // Using docType if available, otherwise fallback to timestamp+filename
+        const finalFileName = docType
+            ? `${sanitizedUserName}-${docType}.${ext}`
+            : `${sanitizedUserName}-${Date.now()}-${fileName}`;
+
+        const key = `${req.user._id}/documents/${finalFileName}`;
 
         const command = new PutObjectCommand({
             Bucket: bucketName,

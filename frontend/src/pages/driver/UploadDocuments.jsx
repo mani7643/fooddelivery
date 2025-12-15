@@ -82,7 +82,8 @@ export default function UploadDocuments() {
                 console.log(`Step 1: Getting signed URL for ${key}`);
                 const signResponse = await api.post('/documents/upload-url', {
                     fileName: file.name,
-                    contentType: file.type
+                    contentType: file.type,
+                    docType: key // Pass the document type (e.g., aadhaarFront)
                 });
 
                 const { signedUrl, key: s3Key } = signResponse.data;
