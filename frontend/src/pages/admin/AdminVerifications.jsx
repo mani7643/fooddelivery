@@ -37,6 +37,7 @@ export default function AdminVerifications() {
     const [admins, setAdmins] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedDriver, setSelectedDriver] = useState(null);
+    const [signedUrls, setSignedUrls] = useState({}); // Store signed URLs for the modal
     const [showModal, setShowModal] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
     const [notes, setNotes] = useState('');
@@ -51,7 +52,52 @@ export default function AdminVerifications() {
     });
     const [searchQuery, setSearchQuery] = useState('');
 
+    // Fetch Signed URLs for thumbnails when driver is selected
+    useEffect(() => {
+        if (selectedDriver && showModal) {
+            const fetchSignedUrls = async () => {
+                const urls = {};
+                const docKeys = ['aadhaarFront', 'aadhaarBack', 'dlFront', 'dlBack', 'panCard'];
+
+                // Helper to sign a single URL
+                const sign = async (key, fileUrl) => {
+                    if (!fileUrl) return;
+                    // If local, ignore
+                    if (!fileUrl.startsWith('http')) {
+                        urls[key] = `${import.meta.env.VITE_API_URL.replace('/api', '')}${fileUrl}`;
+                        return;
+                    }
+                    try {
+                        const res = await api.post('/documents/sign-url', { fileUrl });
+                        if (res.data.signedUrl) {
+                            urls[key] = res.data.signedUrl;
+                        }
+                    } catch (err) {
+                        console.error(`Failed to sign ${key}`, err);
+                        urls[key] = fileUrl; // Fallback
+                    }
+                };
+
+                // Run in parallel
+                const promises = docKeys.map(key => {
+                    if (selectedDriver.documents && selectedDriver.documents[key]) {
+                        return sign(key, selectedDriver.documents[key]);
+                    }
+                    return Promise.resolve();
+                });
+
+                await Promise.all(promises);
+                setSignedUrls(urls);
+            };
+
+            fetchSignedUrls();
+        } else {
+            setSignedUrls({}); // Reset on close
+        }
+    }, [selectedDriver, showModal]);
+
     const handleViewDocument = async (fileUrl) => {
+        // ... (rest of logic)
         if (!fileUrl) return;
 
         // If it's already a full signed URL or external URL (rare), just open it
@@ -346,7 +392,7 @@ export default function AdminVerifications() {
                             WebkitTextFillColor: 'transparent',
                             marginBottom: 'var(--space-2)'
                         }}>
-                            Admin Dashboard (v1.2)
+                            Admin Dashboard
                         </h1>
                         <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-lg)' }}>
                             Manage verify requests and admin approvals
@@ -876,10 +922,10 @@ export default function AdminVerifications() {
                                             <div>
                                                 <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>Aadhaar Front</p>
                                                 <img
-                                                    src={getDocumentUrl(selectedDriver.documents.aadhaarFront)}
+                                                    src={signedUrls.aadhaarFront || getDocumentUrl(selectedDriver.documents.aadhaarFront)}
                                                     alt="Aadhaar Front"
-                                                    style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                    onClick={() => handleViewDocument(selectedDriver.documents.aadhaarFront)}
+                                                    style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer', objectFit: 'cover', height: '150px' }}
+                                                    onClick={() => window.open(signedUrls.aadhaarFront || getDocumentUrl(selectedDriver.documents.aadhaarFront), '_blank')}
                                                 />
                                             </div>
                                         )}
@@ -887,10 +933,10 @@ export default function AdminVerifications() {
                                             <div>
                                                 <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>Aadhaar Back</p>
                                                 <img
-                                                    src={getDocumentUrl(selectedDriver.documents.aadhaarBack)}
+                                                    src={signedUrls.aadhaarBack || getDocumentUrl(selectedDriver.documents.aadhaarBack)}
                                                     alt="Aadhaar Back"
-                                                    style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                    onClick={() => handleViewDocument(selectedDriver.documents.aadhaarBack)}
+                                                    style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer', objectFit: 'cover', height: '150px' }}
+                                                    onClick={() => window.open(signedUrls.aadhaarBack || getDocumentUrl(selectedDriver.documents.aadhaarBack), '_blank')}
                                                 />
                                             </div>
                                         )}
@@ -898,10 +944,10 @@ export default function AdminVerifications() {
                                             <div>
                                                 <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>DL Front</p>
                                                 <img
-                                                    src={getDocumentUrl(selectedDriver.documents.dlFront)}
+                                                    src={signedUrls.dlFront || getDocumentUrl(selectedDriver.documents.dlFront)}
                                                     alt="DL Front"
-                                                    style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                    onClick={() => handleViewDocument(selectedDriver.documents.dlFront)}
+                                                    style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer', objectFit: 'cover', height: '150px' }}
+                                                    onClick={() => window.open(signedUrls.dlFront || getDocumentUrl(selectedDriver.documents.dlFront), '_blank')}
                                                 />
                                             </div>
                                         )}
@@ -909,10 +955,10 @@ export default function AdminVerifications() {
                                             <div>
                                                 <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>DL Back</p>
                                                 <img
-                                                    src={getDocumentUrl(selectedDriver.documents.dlBack)}
+                                                    src={signedUrls.dlBack || getDocumentUrl(selectedDriver.documents.dlBack)}
                                                     alt="DL Back"
-                                                    style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                    onClick={() => handleViewDocument(selectedDriver.documents.dlBack)}
+                                                    style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer', objectFit: 'cover', height: '150px' }}
+                                                    onClick={() => window.open(signedUrls.dlBack || getDocumentUrl(selectedDriver.documents.dlBack), '_blank')}
                                                 />
                                             </div>
                                         )}
@@ -920,10 +966,10 @@ export default function AdminVerifications() {
                                             <div>
                                                 <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-2)' }}>PAN Card</p>
                                                 <img
-                                                    src={getDocumentUrl(selectedDriver.documents.panCard)}
+                                                    src={signedUrls.panCard || getDocumentUrl(selectedDriver.documents.panCard)}
                                                     alt="PAN Card"
-                                                    style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                                                    onClick={() => handleViewDocument(selectedDriver.documents.panCard)}
+                                                    style={{ width: '100%', borderRadius: 'var(--radius-md)', cursor: 'pointer', objectFit: 'cover', height: '150px' }}
+                                                    onClick={() => window.open(signedUrls.panCard || getDocumentUrl(selectedDriver.documents.panCard), '_blank')}
                                                 />
                                             </div>
                                         )}
