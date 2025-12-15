@@ -18,8 +18,12 @@ router.post('/upload-url', protect, async (req, res) => {
         }
 
         const bucketName = process.env.AWS_BUCKET_NAME;
-        // Construct a unique key: <userId>/documents/<timestamp>-<filename>
-        const key = `${req.user._id}/documents/${Date.now()}-${fileName}`;
+
+        // Sanitize user name (replace spaces with underscores, remove non-alphanumeric)
+        const sanitizedUserName = req.user.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+
+        // Construct a unique key: <userId>/documents/<UserName>_<timestamp>_<filename>
+        const key = `${req.user._id}/documents/${sanitizedUserName}_${Date.now()}_${fileName}`;
 
         const command = new PutObjectCommand({
             Bucket: bucketName,
