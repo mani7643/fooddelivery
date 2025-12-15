@@ -16,7 +16,7 @@ export default function VerificationPending() {
 
     const checkVerificationStatus = async () => {
         try {
-            const response = await api.get('/driver/documents');
+            const response = await api.get(`/driver/documents?t=${Date.now()}`);
             const status = response.data.verificationStatus;
             setVerificationStatus(status);
 
