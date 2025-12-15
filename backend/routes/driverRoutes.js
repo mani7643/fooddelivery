@@ -290,8 +290,15 @@ router.post('/upload-documents', protect, authorize('driver'), (req, res, next) 
 router.post('/upload-documents-base64', protect, authorize('driver'), async (req, res) => {
     try {
         console.log('📦 [Base64 Upload] Received request');
-        const { lastUploadAttempt } = await import('../routes/driverRoutes.js');
-        if (lastUploadAttempt) lastUploadAttempt.step = 'Base64 Route Handler Hit';
+
+        // Log attempt to global variable
+        lastUploadAttempt = {
+            time: new Date().toISOString(),
+            user: req.user._id,
+            headers: req.headers['content-type'],
+            step: 'Base64 Route Handler Hit',
+            method: 'base64'
+        };
 
         const files = req.body;
 
@@ -299,7 +306,6 @@ router.post('/upload-documents-base64', protect, authorize('driver'), async (req
             return res.status(400).json({ message: 'No files provided' });
         }
 
-        // Import S3 client directly (bypass middleware)
         // Import S3 client directly (bypass middleware)
         const { s3: s3Client } = await import('../middleware/uploadS3.js');
         const { Upload } = await import('@aws-sdk/lib-storage');
