@@ -250,7 +250,7 @@ jobs:
             echo "======================================="
 
             # Check if dist exists directly or if it's nested
-            aws s3 sync /home/${{ secrets.EC2_USER }}/frontend-deploy-temp/dist s3://${{ secrets.AWS_FRONTEND_BUCKET_NAME }} --delete
+            aws s3 sync /home/${{ secrets.EC2_USER }}/frontend-deploy-temp/dist s3://${{ secrets.AWS_FRONTEND_BUCKET_NAME }}
 
             # Invalidate CloudFront Cache (if Distribution ID is provided)
             # We use a conditional check to avoid failure if the secret is missing
