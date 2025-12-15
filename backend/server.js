@@ -12,7 +12,8 @@ import authRoutes from './routes/authRoutes.js';
 import driverRoutes from './routes/driverRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
-import documentRoutes from './routes/documentRoutes.js'; // Added document routes
+import documentRoutes from './routes/documentRoutes.js';
+import debugDriverRoutes from './routes/debugDriverRoutes.js'; // Debug routes
 
 // Import socket handler
 import socketHandler from './socket/socketHandler.js';
@@ -121,7 +122,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/driver', driverRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/documents', documentRoutes); // Register document routes
+app.use('/api/documents', documentRoutes);
+app.use('/api/driver-debug', debugDriverRoutes); // Mount debug routes
 
 // Root route
 app.get('/', (req, res) => {
