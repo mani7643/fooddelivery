@@ -65,6 +65,20 @@ export let lastPostRequest = null; // Track POST specifically
 app.use((req, res, next) => {
     console.log(`🌍 [Global Log] ${req.method} ${req.url}`);
 
+    // --- DEBUG: LOG TO FILE FOR DIAGNOSIS ---
+    // Capture ALL requests to the debug file to see if /upload is hitting server
+    try {
+        const fs = await import('fs');
+        const path = await import('path');
+        const debugFile = path.join(process.cwd(), 'debug_driver.log');
+        const logLine = `[global-middleware] ${req.method} ${req.url} (Body: ${req.headers['content-length']} bytes)\n`;
+        // Use sync to ensure write
+        fs.appendFileSync(debugFile, logLine);
+    } catch (e) {
+        // Ignore fs import errors in strict mode if any
+    }
+    // ----------------------------------------
+
     const logData = {
         method: req.method,
         url: req.url,
