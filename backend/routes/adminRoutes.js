@@ -4,6 +4,8 @@ import Driver from '../models/Driver.js';
 import User from '../models/User.js';
 import notificationService from '../services/notificationService.js';
 import { fileURLToPath } from 'url';
+import { s3 } from '../middleware/uploadS3.js';
+import { ListObjectsCommand } from '@aws-sdk/client-s3';
 
 const router = express.Router();
 
@@ -259,8 +261,7 @@ router.get('/debug-files', async (req, res) => {
 // @route   GET /api/admin/debug-s3
 // @desc    Debug S3 connectivity and permission
 // @access  Public (Temporary for debugging) - verify it is protected in prod
-import { s3 } from '../middleware/uploadS3.js';
-import { ListObjectsCommand } from '@aws-sdk/client-s3';
+// Imports moved to top
 
 router.get('/debug-s3', async (req, res) => {
     try {

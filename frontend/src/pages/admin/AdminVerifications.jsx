@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { useSocket } from '../../context/SocketContext';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -18,6 +18,17 @@ L.Icon.Default.mergeOptions({
     iconUrl: markerIcon,
     shadowUrl: markerShadow,
 });
+
+// Helper component to recenter map
+function RecenterMap({ lat, lng }) {
+    const map = useMap();
+    useEffect(() => {
+        if (lat && lng) {
+            map.flyTo([lat, lng], 15);
+        }
+    }, [lat, lng, map]);
+    return null;
+}
 
 export default function AdminVerifications() {
     const navigate = useNavigate();
@@ -788,6 +799,12 @@ export default function AdminVerifications() {
                                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                                         />
+                                        {selectedDriver?.currentLocation?.coordinates && (
+                                            <RecenterMap
+                                                lat={selectedDriver.currentLocation.coordinates[1]} // Latitude
+                                                lng={selectedDriver.currentLocation.coordinates[0]} // Longitude
+                                            />
+                                        )}
                                         {onlineDrivers.map(driver => (
                                             driver.currentLocation?.coordinates && (
                                                 <Marker
