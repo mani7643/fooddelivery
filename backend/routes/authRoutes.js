@@ -6,7 +6,6 @@ import Driver from '../models/Driver.js';
 import PhoneVerification from '../models/PhoneVerification.js';
 import EmailVerification from '../models/EmailVerification.js';
 import notificationService from '../services/notificationService.js';
-import logger from '../config/logger.js';
 
 const router = express.Router();
 
@@ -22,55 +21,55 @@ const generateToken = (id) => {
 // @access  Public
 router.post('/send-email-otp', async (req, res) => {
     try {
-        logger.info('📧 [EMAIL-OTP] Received send-email-otp request');
+        console.log('📧 [EMAIL-OTP] Received send-email-otp request');
         const { email } = req.body;
 
         if (!email) {
-            logger.info('❌ [EMAIL-OTP] No email provided');
+            console.log('❌ [EMAIL-OTP] No email provided');
             return res.status(400).json({ message: 'Email is required' });
         }
 
         // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            logger.info('❌ [EMAIL-OTP] Invalid email format');
+            console.log('❌ [EMAIL-OTP] Invalid email format');
             return res.status(400).json({ message: 'Invalid email format' });
         }
 
-        logger.info(`📧 [EMAIL-OTP] Processing for email: ${email}`);
+        console.log(`📧 [EMAIL-OTP] Processing for email: ${email}`);
 
         // Check if email already registered
         const existingUser = await User.findOne({ email });
         if (existingUser) {
-            logger.info(`⚠️ [EMAIL-OTP] Email ${email} already registered`);
+            console.log(`⚠️ [EMAIL-OTP] Email ${email} already registered`);
             return res.status(400).json({ message: 'Email already registered' });
         }
 
         // Generate 6 digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        logger.info(`🔢 [EMAIL-OTP] Generated OTP for ${email}: ${otp}`);
+        console.log(`🔢 [EMAIL-OTP] Generated OTP for ${email}: ${otp}`);
 
         // Save OTP to DB (upsert)
-        logger.info(`💾 [EMAIL-OTP] Saving to database...`);
+        console.log(`💾 [EMAIL-OTP] Saving to database...`);
         const verification = await EmailVerification.findOneAndUpdate(
             { email },
             { email, otp, createdAt: Date.now() },
             { upsert: true, new: true }
         );
-        logger.info(`✅ [EMAIL-OTP] Saved to database with ID: ${verification._id}`);
+        console.log(`✅ [EMAIL-OTP] Saved to database with ID: ${verification._id}`);
 
         // Send OTP via email
         await notificationService.sendOtpEmail(email, otp);
-        logger.info('====================================================');
-        logger.info(`📧 OTP FOR ${email}: ${otp}`);
-        logger.info(`⏰ Valid for 5 minutes`);
-        logger.info('====================================================');
+        console.log('====================================================');
+        console.log(`📧 OTP FOR ${email}: ${otp}`);
+        console.log(`⏰ Valid for 5 minutes`);
+        console.log('====================================================');
 
         res.json({ success: true, message: 'OTP sent to your email' });
-        logger.info(`✅ [EMAIL-OTP] Response sent successfully for ${email}`);
+        console.log(`✅ [EMAIL-OTP] Response sent successfully for ${email}`);
     } catch (error) {
-        logger.error('❌ [EMAIL-OTP] Send OTP error:', error);
-        logger.error('Error details:', {
+        console.error('❌ [EMAIL-OTP] Send OTP error:', error);
+        console.error('Error details:', {
             message: error.message,
             stack: error.stack,
             name: error.name
@@ -86,47 +85,47 @@ router.post('/send-email-otp', async (req, res) => {
 /*
 router.post('/send-otp', async (req, res) => {
     try {
-        logger.info('📞 [OTP] Received send-otp request');
+        console.log('📞 [OTP] Received send-otp request');
         const { phone } = req.body;
 
         if (!phone) {
-            logger.info('❌ [OTP] No phone number provided');
+            console.log('❌ [OTP] No phone number provided');
             return res.status(400).json({ message: 'Phone number is required' });
         }
 
-        logger.info(`📞 [OTP] Processing for phone: ${phone}`);
+        console.log(`📞 [OTP] Processing for phone: ${phone}`);
 
         // Check if phone already registered
         const existingUser = await User.findOne({ phone });
         if (existingUser) {
-            logger.info(`⚠️ [OTP] Phone ${phone} already registered`);
+            console.log(`⚠️ [OTP] Phone ${phone} already registered`);
             return res.status(400).json({ message: 'Phone number already registered' });
         }
 
         // Generate 6 digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        logger.info(`🔢 [OTP] Generated OTP for ${phone}: ${otp}`);
+        console.log(`🔢 [OTP] Generated OTP for ${phone}: ${otp}`);
 
         // Save OTP to DB (upsert)
-        logger.info(`💾 [OTP] Saving to database...`);
+        console.log(`💾 [OTP] Saving to database...`);
         const verification = await PhoneVerification.findOneAndUpdate(
             { phone },
             { phone, otp, createdAt: Date.now() },
             { upsert: true, new: true }
         );
-        logger.info(`✅ [OTP] Saved to database with ID: ${verification._id}`);
+        console.log(`✅ [OTP] Saved to database with ID: ${verification._id}`);
 
         // Simulate sending SMS
-        logger.info('====================================================');
-        logger.info(`📱 OTP FOR ${phone}: ${otp}`);
-        logger.info(`⏰ Valid for 5 minutes`);
-        logger.info('====================================================');
+        console.log('====================================================');
+        console.log(`📱 OTP FOR ${phone}: ${otp}`);
+        console.log(`⏰ Valid for 5 minutes`);
+        console.log('====================================================');
 
         res.json({ success: true, message: 'OTP sent successfully' });
-        logger.info(`✅ [OTP] Response sent successfully for ${phone}`);
+        console.log(`✅ [OTP] Response sent successfully for ${phone}`);
     } catch (error) {
-        logger.error('❌ [OTP] Send OTP error:', error);
-        logger.error('Error details:', {
+        console.error('❌ [OTP] Send OTP error:', error);
+        console.error('Error details:', {
             message: error.message,
             stack: error.stack,
             name: error.name
@@ -182,7 +181,7 @@ router.post('/register', async (req, res) => {
         // Delete used OTP
         await EmailVerification.deleteOne({ _id: verification._id });
 
-        logger.info(`Creating User with role: ${userRole}...`);
+        console.log(`Creating User with role: ${userRole}...`);
 
         // Create user
         const user = await User.create({
@@ -196,7 +195,7 @@ router.post('/register', async (req, res) => {
 
         // Create driver profile ONLY if role is driver
         if (userRole === 'driver') {
-            logger.info('Creating driver profile for:', user.email);
+            console.log('Creating driver profile for:', user.email);
             const driver = await Driver.create({
                 userId: user._id,
                 name: name,
@@ -205,12 +204,12 @@ router.post('/register', async (req, res) => {
                 vehicleNumber: vehicleNumber,
                 licenseNumber: licenseNumber
             });
-            logger.info('✅ Driver profile created successfully:', driver._id);
+            console.log('✅ Driver profile created successfully:', driver._id);
         } else {
-            logger.info(`✅ Admin user created successfully (Status: ${accountStatus})`);
+            console.log(`✅ Admin user created successfully (Status: ${accountStatus})`);
         }
 
-        logger.info('✅ Registration completed for:', user.email);
+        console.log('✅ Registration completed for:', user.email);
 
         // Send welcome notifications
         notificationService.sendWelcomeEmail(user.email, user.name);
@@ -240,8 +239,8 @@ router.post('/register', async (req, res) => {
                 : 'Registration successful'
         });
     } catch (error) {
-        logger.error('❌ Registration error:', error);
-        logger.error('Error stack:', error.stack);
+        console.error('❌ Registration error:', error);
+        console.error('Error stack:', error.stack);
         // Clean up user if created but driver failed
         // Note: In production use transactions
         const { email } = req.body;
@@ -249,7 +248,7 @@ router.post('/register', async (req, res) => {
             const user = await User.findOne({ email });
             if (user && !await Driver.findOne({ userId: user._id })) {
                 await User.deleteOne({ _id: user._id });
-                logger.info('Rollback: Deleted orphaned user', user._id);
+                console.log('Rollback: Deleted orphaned user', user._id);
             }
         }
 
@@ -322,7 +321,7 @@ router.post('/login', async (req, res) => {
             }
         });
     } catch (error) {
-        logger.error('Login error:', error);
+        console.error('Login error:', error);
         res.status(500).json({ message: 'Server error during login', error: error.message });
     }
 });
@@ -355,7 +354,7 @@ router.get('/me', async (req, res) => {
             }
         });
     } catch (error) {
-        logger.error('Auth check error:', error);
+        console.error('Auth check error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
@@ -384,14 +383,14 @@ router.post('/forgotpassword', async (req, res) => {
         await notificationService.sendPasswordResetEmail(user.email, resetUrl, user.name);
 
         // Also log to console for development
-        logger.info('====================================================');
-        logger.info('PASSWORD RESET LINK:');
-        logger.info(resetUrl);
-        logger.info('====================================================');
+        console.log('====================================================');
+        console.log('PASSWORD RESET LINK:');
+        console.log(resetUrl);
+        console.log('====================================================');
 
         res.status(200).json({ success: true, data: 'Email sent' });
     } catch (error) {
-        logger.error('Forgot password error:', error);
+        console.error('Forgot password error:', error);
         user.resetPasswordToken = undefined;
         user.resetPasswordExpire = undefined;
         await user.save({ validateBeforeSave: false });
@@ -440,7 +439,7 @@ router.put('/resetpassword/:resettoken', async (req, res) => {
             }
         });
     } catch (error) {
-        logger.error('Reset password error:', error);
+        console.error('Reset password error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });

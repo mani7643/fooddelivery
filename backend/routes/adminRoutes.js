@@ -6,7 +6,6 @@ import notificationService from '../services/notificationService.js';
 import { fileURLToPath } from 'url';
 import { s3 } from '../middleware/uploadS3.js';
 import { ListObjectsCommand } from '@aws-sdk/client-s3';
-import logger from '../config/logger.js';
 
 const router = express.Router();
 
@@ -21,7 +20,7 @@ router.get('/pending-verifications', protect, authorize('admin'), async (req, re
 
         res.json({ success: true, drivers });
     } catch (error) {
-        logger.error('Get pending verifications error:', error);
+        console.error('Get pending verifications error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
@@ -56,14 +55,14 @@ router.put('/verify-driver/:driverId', protect, authorize('admin'), async (req, 
                 driver.userId.email,
                 driver.userId.name
             );
-            logger.info(`✅ Driver ${driver.userId.name} verified and email sent`);
+            console.log(`✅ Driver ${driver.userId.name} verified and email sent`);
         } else if (status === 'rejected') {
             await notificationService.sendVerificationRejectionEmail(
                 driver.userId.email,
                 driver.userId.name,
                 notes
             );
-            logger.info(`❌ Driver ${driver.userId.name} rejected and email sent`);
+            console.log(`❌ Driver ${driver.userId.name} rejected and email sent`);
         }
 
         res.json({
@@ -72,7 +71,7 @@ router.put('/verify-driver/:driverId', protect, authorize('admin'), async (req, 
             driver
         });
     } catch (error) {
-        logger.error('Verify driver error:', error);
+        console.error('Verify driver error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
@@ -101,7 +100,7 @@ router.get('/stats', protect, authorize('admin'), async (req, res) => {
             }
         });
     } catch (error) {
-        logger.error('Get stats error:', error);
+        console.error('Get stats error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
@@ -142,7 +141,7 @@ router.get('/drivers', protect, authorize('admin'), async (req, res) => {
 
         res.json({ success: true, drivers });
     } catch (error) {
-        logger.error('Get drivers error:', error);
+        console.error('Get drivers error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
@@ -161,7 +160,7 @@ router.get('/online-drivers', protect, authorize('admin'), async (req, res) => {
 
         res.json({ success: true, drivers });
     } catch (error) {
-        logger.error('Get online drivers error:', error);
+        console.error('Get online drivers error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
@@ -178,7 +177,7 @@ router.get('/pending-admins', protect, authorize('admin'), async (req, res) => {
 
         res.json({ success: true, admins });
     } catch (error) {
-        logger.error('Get pending admins error:', error);
+        console.error('Get pending admins error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
@@ -215,7 +214,7 @@ router.put('/approve-admin/:userId', protect, authorize('admin'), async (req, re
             }
         });
     } catch (error) {
-        logger.error('Approve admin error:', error);
+        console.error('Approve admin error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
@@ -298,7 +297,7 @@ router.get('/debug-s3', async (req, res) => {
             writeTest: 'Success'
         });
     } catch (error) {
-        logger.error('S3 Debug Error:', error);
+        console.error('S3 Debug Error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to connect to S3',
@@ -328,7 +327,7 @@ router.delete('/driver/:id', protect, authorize('admin'), async (req, res) => {
 
         res.json({ message: 'Driver and associated user account deleted successfully' });
     } catch (error) {
-        logger.error('Error deleting driver:', error);
+        console.error('Error deleting driver:', error);
         res.status(500).json({ message: 'Error deleting driver' });
     }
 });
