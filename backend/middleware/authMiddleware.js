@@ -25,6 +25,7 @@ export const protect = async (req, res, next) => {
                     message: 'Account pending approval. Access denied.'
                 });
             }
+            //manidnraskfjawdkflkajsd;lkfjlasdj
 
             next();
         } catch (error) {
