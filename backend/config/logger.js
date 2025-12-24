@@ -1,18 +1,19 @@
 import winston from 'winston';
-import { ElasticsearchTransport } from 'winston-elasticsearch';
+import { createRequire } from 'module';
+import { Client } from '@opensearch-project/opensearch';
 
-const esTransportOpts = {
-    level: 'info',
-    clientOpts: {
-        node: process.env.ELASTICSEARCH_NODE || 'http://localhost:9200',
-        auth: {
-            username: process.env.ELASTICSEARCH_USERNAME,
-            password: process.env.ELASTICSEARCH_PASSWORD
-        }
-    },
-    indexPrefix: 'courier-logs',
-    indexSuffixPattern: 'YYYY.MM.DD'
-};
+const require = createRequire(import.meta.url);
+const winstonOpenSearch = require('winston-opensearch');
+// Ensure we get the constructor regardless of how it's exported (CJS/ESM interop)
+const OpenSearchTransport = winstonOpenSearch.OpenSearchTransport || winstonOpenSearch.default || winstonOpenSearch;
+
+const osClient = new Client({
+    node: process.env.ELASTICSEARCH_NODE || 'http://localhost:9200',
+    auth: {
+        username: process.env.ELASTICSEARCH_USERNAME,
+        password: process.env.ELASTICSEARCH_PASSWORD
+    }
+});
 
 const logger = winston.createLogger({
     level: 'info',
@@ -30,17 +31,23 @@ const logger = winston.createLogger({
     ]
 });
 
-// Add Elasticsearch transport only if node is defined (or always add it and let it fail gracefully/retry?)
-// Better to check env, but I put a default localhost above.
-// Ideally usage:
+// Configure Transport
 if (process.env.ELASTICSEARCH_NODE) {
-    const esTransport = new ElasticsearchTransport(esTransportOpts);
+    // Check if OpenSearchTransport is actually a constructor
+    if (typeof OpenSearchTransport === 'function') {
+        const osTransport = new OpenSearchTransport({
+            client: osClient,
+            index: 'courier-logs'
+        });
 
-    esTransport.on('error', (error) => {
-        console.error('Elasticsearch Transport Error:', error);
-    });
+        osTransport.on('error', (error) => {
+            console.error('OpenSearch Transport Error:', error);
+        });
 
-    logger.add(esTransport);
+        logger.add(osTransport);
+    } else {
+        console.error('❌ Failed to initialize OpenSearch Transport: OpenSearchTransport is not a constructor', typeof OpenSearchTransport);
+    }
 }
 
 export default logger;
