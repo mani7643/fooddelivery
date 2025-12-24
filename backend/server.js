@@ -13,7 +13,6 @@ import driverRoutes from './routes/driverRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import documentRoutes from './routes/documentRoutes.js'; // Added document routes
-import logger from './config/logger.js';
 
 // Import socket handler
 import socketHandler from './socket/socketHandler.js';
@@ -68,12 +67,7 @@ export let lastGlobalRequest = null;
 export let lastPostRequest = null; // Track POST specifically
 
 app.use((req, res, next) => {
-    logger.info(`🌍 [Global Log] ${req.method} ${req.url}`, {
-        method: req.method,
-        url: req.url,
-        ip: req.ip,
-        userAgent: req.get('User-Agent')
-    });
+    console.log(`🌍 [Global Log] ${req.method} ${req.url}`);
 
     const logData = {
         method: req.method,
@@ -86,7 +80,7 @@ app.use((req, res, next) => {
 
     if (req.method === 'POST') {
         lastPostRequest = logData;
-        logger.info(`📦 [POST Log] Captured POST to ${req.url}`);
+        console.log(`📦 [POST Log] Captured POST to ${req.url}`);
     }
 
     next();
@@ -112,11 +106,12 @@ console.log('Using URI:', mongoUri.replace(/\/\/([^:]+):([^@]+)@/, '//*****:****
 
 mongoose.connect(mongoUri)
     .then(() => {
-        logger.info('✅ MongoDB connected successfully');
-        logger.info(`📊 Database: ${mongoose.connection.name}`);
+        console.log('✅ MongoDB connected successfully');
+        console.log('📊 Database:', mongoose.connection.name);
     })
     .catch((err) => {
-        logger.error('❌ MongoDB connection error:', { message: err.message, error: err });
+        console.error('❌ MongoDB connection error:', err.message);
+        console.error('Full error:', err);
         process.exit(1);
     });
 
@@ -149,7 +144,7 @@ app.get('/', (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-    logger.error(err.message, { stack: err.stack, method: req.method, url: req.url });
+    console.error(err.stack);
     res.status(500).json({
         message: 'Something went wrong!',
         error: process.env.NODE_ENV === 'development' ? err.message : undefined
@@ -159,9 +154,9 @@ app.use((err, req, res, next) => {
 // Start server
 const PORT = process.env.PORT || 8000;
 httpServer.listen(PORT, () => {
-    logger.info(`🚀 Server running on port ${PORT}`);
-    logger.info(`📡 Socket.io server ready`);
-    logger.info(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📡 Socket.io server ready`);
+    console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
 export default app;

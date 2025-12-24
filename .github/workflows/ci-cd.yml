@@ -179,11 +179,6 @@ jobs:
             echo "AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}" >> .env
             echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env
             echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env
-            
-            # Elasticsearch Logging
-            echo "ELASTICSEARCH_NODE=${{ secrets.ELASTICSEARCH_NODE }}" >> .env
-            echo "ELASTICSEARCH_USERNAME=${{ secrets.ELASTICSEARCH_USERNAME }}" >> .env
-            echo "ELASTICSEARCH_PASSWORD=${{ secrets.ELASTICSEARCH_PASSWORD }}" >> .env
 
             # Login to GHCR on EC2 (as root/sudo to ensure docker access)
             echo ${{ secrets.GITHUB_TOKEN }} | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
