@@ -4,7 +4,6 @@ import { Client } from '@opensearch-project/opensearch';
 
 const require = createRequire(import.meta.url);
 const winstonOpenSearch = require('winston-opensearch');
-// Ensure we get the constructor regardless of how it's exported (CJS/ESM interop)
 const OpenSearchTransport = winstonOpenSearch.OpenSearchTransport || winstonOpenSearch.default || winstonOpenSearch;
 
 const osClient = new Client({
@@ -31,23 +30,29 @@ const logger = winston.createLogger({
     ]
 });
 
-// Configure Transport
 if (process.env.ELASTICSEARCH_NODE) {
-    // Check if OpenSearchTransport is actually a constructor
     if (typeof OpenSearchTransport === 'function') {
+        console.log('🌐 Initializing OpenSearch Transport...');
         const osTransport = new OpenSearchTransport({
             client: osClient,
-            index: 'courier-logs'
+            indexPrefix: 'courier-logs',
+            // Ensure indices are created if they don't exist
+            ensureIndexTemplate: true
         });
 
         osTransport.on('error', (error) => {
-            console.error('OpenSearch Transport Error:', error);
+            console.error('❌ OpenSearch Transport Error:', error);
         });
 
+        // Some transports emit 'warn' or 'info' events too
+
         logger.add(osTransport);
+        console.log('✅ OpenSearch Transport added to Winston');
     } else {
         console.error('❌ Failed to initialize OpenSearch Transport: OpenSearchTransport is not a constructor', typeof OpenSearchTransport);
     }
+} else {
+    console.log('ℹ️ OpenSearch logging disabled (ELASTICSEARCH_NODE not set)');
 }
 
 export default logger;
