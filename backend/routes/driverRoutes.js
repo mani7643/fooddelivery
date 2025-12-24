@@ -4,6 +4,7 @@ import Driver from '../models/Driver.js';
 import Order from '../models/Order.js';
 import User from '../models/User.js';
 import { uploadDocumentsS3 } from '../middleware/uploadS3.js';
+import logger from '../config/logger.js';
 
 const router = express.Router();
 
@@ -23,7 +24,7 @@ router.get('/profile', protect, authorize('driver'), async (req, res) => {
 
         res.json({ success: true, driver });
     } catch (error) {
-        console.error('Get driver profile error:', error);
+        logger.error('Get driver profile error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
@@ -45,7 +46,7 @@ router.put('/profile', protect, authorize('driver'), async (req, res) => {
 
         res.json({ success: true, driver });
     } catch (error) {
-        console.error('Update driver profile error:', error);
+        logger.error('Update driver profile error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
@@ -70,7 +71,7 @@ router.put('/location', protect, authorize('driver'), async (req, res) => {
 
         res.json({ success: true, location: driver.currentLocation });
     } catch (error) {
-        console.error('Update location error:', error);
+        logger.error('Update location error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
@@ -106,7 +107,7 @@ router.put('/availability', protect, authorize('driver'), async (req, res) => {
 
         res.json({ success: true, isAvailable: driver.isAvailable });
     } catch (error) {
-        console.error('Update availability error:', error);
+        logger.error('Update availability error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
@@ -127,7 +128,7 @@ router.get('/orders', protect, authorize('driver'), async (req, res) => {
 
         res.json({ success: true, orders });
     } catch (error) {
-        console.error('Get driver orders error:', error);
+        logger.error('Get driver orders error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
@@ -148,7 +149,7 @@ router.get('/orders/active', protect, authorize('driver'), async (req, res) => {
 
         res.json({ success: true, orders });
     } catch (error) {
-        console.error('Get active orders error:', error);
+        logger.error('Get active orders error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
@@ -172,7 +173,7 @@ router.put('/orders/:orderId/accept', protect, authorize('driver'), async (req, 
 
         res.json({ success: true, order });
     } catch (error) {
-        console.error('Accept order error:', error);
+        logger.error('Accept order error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
@@ -207,7 +208,7 @@ router.put('/orders/:orderId/status', protect, authorize('driver'), async (req, 
 
         res.json({ success: true, order });
     } catch (error) {
-        console.error('Update order status error:', error);
+        logger.error('Update order status error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
@@ -238,7 +239,7 @@ router.get('/earnings', protect, authorize('driver'), async (req, res) => {
 
         res.json({ success: true, earnings });
     } catch (error) {
-        console.error('Get earnings error:', error);
+        logger.error('Get earnings error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
@@ -254,7 +255,7 @@ router.post('/upload-documents', protect, authorize('driver'), (req, res, next) 
         headers: req.headers['content-type'],
         step: 'Reached Route Handler (Pre-Multer)'
     };
-    console.log('Upload Request Received:', lastUploadAttempt);
+    logger.info('Upload Request Received:', lastUploadAttempt);
     next();
 }, uploadDocumentsS3, async (req, res) => {
     lastUploadAttempt.step = 'Passed Multer (Success)';
@@ -286,7 +287,7 @@ router.post('/upload-documents', protect, authorize('driver'), (req, res, next) 
             }
         });
 
-        console.log(`✅ Documents uploaded for driver: ${driver.name}`);
+        logger.info(`✅ Documents uploaded for driver: ${driver.name}`);
 
         res.status(200).json({
             success: true,
@@ -295,7 +296,7 @@ router.post('/upload-documents', protect, authorize('driver'), (req, res, next) 
             verificationStatus: driver.verificationStatus
         });
     } catch (error) {
-        console.error('Upload documents error:', error);
+        logger.error('Upload documents error:', error);
         res.status(500).json({ message: 'Failed to upload documents', error: error.message });
     }
 });
@@ -339,14 +340,14 @@ router.post('/confirm-documents', protect, authorize('driver'), async (req, res)
             }
         });
 
-        console.log(`✅ Documents confirmed for driver: ${driver.name} (Direct Upload)`);
+        logger.info(`✅ Documents confirmed for driver: ${driver.name} (Direct Upload)`);
 
         // Notify Admins
         let notificationResult = "Not attempted";
         try {
-            console.log('🔔 Attempting to notify admins about new documents...');
+            logger.info('🔔 Attempting to notify admins about new documents...');
             const admins = await User.find({ role: 'admin' });
-            console.log(`👤 Found ${admins.length} admin(s) in database.`);
+            logger.info(`👤 Found ${admins.length} admin(s) in database.`);
 
             if (admins.length === 0) {
                 notificationResult = "No admins found in DB";
@@ -354,7 +355,7 @@ router.post('/confirm-documents', protect, authorize('driver'), async (req, res)
                 const results = [];
                 for (const admin of admins) {
                     try {
-                        console.log(`📧 Sending notification to admin: ${admin.email}`);
+                        logger.info(`📧 Sending notification to admin: ${admin.email}`);
                         await notificationService.sendAdminDocumentNotification(
                             admin.email,
                             driver.userId.name,
@@ -366,10 +367,10 @@ router.post('/confirm-documents', protect, authorize('driver'), async (req, res)
                     }
                 }
                 notificationResult = results.join(', ');
-                console.log(`📢 Notification Summary: ${notificationResult}`);
+                logger.info(`📢 Notification Summary: ${notificationResult}`);
             }
         } catch (notifyError) {
-            console.error('❌ Failed to notify admins:', notifyError);
+            logger.error('❌ Failed to notify admins:', notifyError);
             notificationResult = `Error: ${notifyError.message}`;
         }
 
@@ -382,7 +383,7 @@ router.post('/confirm-documents', protect, authorize('driver'), async (req, res)
         });
 
     } catch (error) {
-        console.error('Confirm documents error:', error);
+        logger.error('Confirm documents error:', error);
         res.status(500).json({ message: 'Failed to confirm documents', error: error.message });
     }
 });
@@ -392,7 +393,7 @@ router.post('/confirm-documents', protect, authorize('driver'), async (req, res)
 // @access  Private (Driver only)
 router.post('/upload-documents-base64', protect, authorize('driver'), async (req, res) => {
     try {
-        console.log('📦 [Base64 Upload] Received request');
+        logger.info('📦 [Base64 Upload] Received request');
 
         // Log attempt to global variable
         lastUploadAttempt = {
@@ -421,7 +422,7 @@ router.post('/upload-documents-base64', protect, authorize('driver'), async (req
 
             const matches = base64String.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
             if (!matches || matches.length !== 3) {
-                console.error(`Invalid base64 string for ${key}`);
+                logger.error(`Invalid base64 string for ${key}`);
                 continue;
             }
 
@@ -464,7 +465,7 @@ router.post('/upload-documents-base64', protect, authorize('driver'), async (req
             }
         });
 
-        console.log(`✅ Base64 Documents uploaded for driver: ${driver.name}`);
+        logger.info(`✅ Base64 Documents uploaded for driver: ${driver.name}`);
 
         // Notify Admins
         try {
@@ -477,7 +478,7 @@ router.post('/upload-documents-base64', protect, authorize('driver'), async (req
                 );
             }
         } catch (notifyError) {
-            console.error('Failed to notify admins:', notifyError);
+            logger.error('Failed to notify admins:', notifyError);
         }
 
         res.json({
@@ -487,7 +488,7 @@ router.post('/upload-documents-base64', protect, authorize('driver'), async (req
         });
 
     } catch (error) {
-        console.error('Base64 Upload Error:', error);
+        logger.error('Base64 Upload Error:', error);
         res.status(500).json({ message: 'Upload failed', error: error.message });
     }
 });
@@ -510,7 +511,7 @@ router.get('/documents', protect, authorize('driver'), async (req, res) => {
             verifiedAt: driver.verifiedAt
         });
     } catch (error) {
-        console.error('Get documents error:', error);
+        logger.error('Get documents error:', error);
         res.status(500).json({
             message: 'Failed to get documents',
             error: error.message

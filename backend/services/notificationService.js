@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import logger from '../config/logger.js';
 
 class NotificationService {
     constructor() {
@@ -29,11 +30,11 @@ class NotificationService {
                         pass: testAccount.pass
                     }
                 });
-                console.log('✅ Ethereal Email Initialized');
-                console.log(`   User: ${testAccount.user}`);
-                console.log(`   Pass: ${testAccount.pass}`);
+                logger.info('✅ Ethereal Email Initialized');
+                logger.info(`   User: ${testAccount.user}`);
+                logger.info(`   Pass: ${testAccount.pass}`);
             } catch (err) {
-                console.error('Failed to create Ethereal account:', err.message);
+                logger.error('Failed to create Ethereal account:', err.message);
             }
         }
     }
@@ -60,17 +61,17 @@ class NotificationService {
                     html
                 });
 
-                console.log(`✅ Welcome email sent to ${to}`);
+                logger.info(`✅ Welcome email sent to ${to}`);
 
                 // If using Ethereal, log the preview URL
                 const previewUrl = nodemailer.getTestMessageUrl(info);
                 if (previewUrl) {
-                    console.log('📬 ---------------------------------------------------');
-                    console.log(`📬 View Real Email Here: ${previewUrl}`);
-                    console.log('📬 ---------------------------------------------------');
+                    logger.info('📬 ---------------------------------------------------');
+                    logger.info(`📬 View Real Email Here: ${previewUrl}`);
+                    logger.info('📬 ---------------------------------------------------');
                 }
             } catch (error) {
-                console.error('❌ Error sending welcome email:', error.message);
+                logger.error('❌ Error sending welcome email:', error.message);
                 this.logEmailToConsole(to, subject, html);
             }
         } else {
@@ -107,17 +108,17 @@ class NotificationService {
                     html
                 });
 
-                console.log(`✅ OTP email sent to ${to}`);
+                logger.info(`✅ OTP email sent to ${to}`);
 
                 // If using Ethereal, log the preview URL
                 const previewUrl = nodemailer.getTestMessageUrl(info);
                 if (previewUrl) {
-                    console.log('📬 ---------------------------------------------------');
-                    console.log(`📬 View OTP Email: ${previewUrl}`);
-                    console.log('📬 ---------------------------------------------------');
+                    logger.info('📬 ---------------------------------------------------');
+                    logger.info(`📬 View OTP Email: ${previewUrl}`);
+                    logger.info('📬 ---------------------------------------------------');
                 }
             } catch (error) {
-                console.error('❌ Error sending OTP email:', error.message);
+                logger.error('❌ Error sending OTP email:', error.message);
                 this.logEmailToConsole(to, subject, `OTP: ${otp}`);
             }
         } else {
@@ -166,17 +167,17 @@ class NotificationService {
                     html
                 });
 
-                console.log(`✅ Password reset email sent to ${to}`);
+                logger.info(`✅ Password reset email sent to ${to}`);
 
                 // If using Ethereal, log the preview URL
                 const previewUrl = nodemailer.getTestMessageUrl(info);
                 if (previewUrl) {
-                    console.log('📬 ---------------------------------------------------');
-                    console.log(`📬 View Password Reset Email: ${previewUrl}`);
-                    console.log('📬 ---------------------------------------------------');
+                    logger.info('📬 ---------------------------------------------------');
+                    logger.info(`📬 View Password Reset Email: ${previewUrl}`);
+                    logger.info('📬 ---------------------------------------------------');
                 }
             } catch (error) {
-                console.error('❌ Error sending password reset email:', error.message);
+                logger.error('❌ Error sending password reset email:', error.message);
                 this.logEmailToConsole(to, subject, `Reset URL: ${resetUrl}`);
             }
         } else {
@@ -234,17 +235,17 @@ class NotificationService {
                     html
                 });
 
-                console.log(`✅ Verification approval email sent to ${to}`);
+                logger.info(`✅ Verification approval email sent to ${to}`);
 
                 // If using Ethereal, log the preview URL
                 const previewUrl = nodemailer.getTestMessageUrl(info);
                 if (previewUrl) {
-                    console.log('📬 ---------------------------------------------------');
-                    console.log(`📬 View Approval Email: ${previewUrl}`);
-                    console.log('📬 ---------------------------------------------------');
+                    logger.info('📬 ---------------------------------------------------');
+                    logger.info(`📬 View Approval Email: ${previewUrl}`);
+                    logger.info('📬 ---------------------------------------------------');
                 }
             } catch (error) {
-                console.error('❌ Error sending verification approval email:', error.message);
+                logger.error('❌ Error sending verification approval email:', error.message);
                 this.logEmailToConsole(to, subject, `Driver ${driverName} approved`);
             }
         } else {
@@ -296,17 +297,17 @@ class NotificationService {
                     html
                 });
 
-                console.log(`✅ Verification rejection email sent to ${to}`);
+                logger.info(`✅ Verification rejection email sent to ${to}`);
 
                 // If using Ethereal, log the preview URL
                 const previewUrl = nodemailer.getTestMessageUrl(info);
                 if (previewUrl) {
-                    console.log('📬 ---------------------------------------------------');
-                    console.log(`📬 View Rejection Email: ${previewUrl}`);
-                    console.log('📬 ---------------------------------------------------');
+                    logger.info('📬 ---------------------------------------------------');
+                    logger.info(`📬 View Rejection Email: ${previewUrl}`);
+                    logger.info('📬 ---------------------------------------------------');
                 }
             } catch (error) {
-                console.error('❌ Error sending verification rejection email:', error.message);
+                logger.error('❌ Error sending verification rejection email:', error.message);
                 this.logEmailToConsole(to, subject, `Driver ${driverName} rejected. Reason: ${reason}`);
             }
         } else {
@@ -318,10 +319,10 @@ class NotificationService {
         // In a real app, integrate with Twilio/SNS here
         const message = `Welcome ${name}! Thanks for joining our delivery network. Download the app to start earning.`;
 
-        console.log('📱 ================= SMS SENT ================= 📱');
-        console.log(`To: ${phone}`);
-        console.log(`Message: ${message}`);
-        console.log('==================================================');
+        logger.info('📱 ================= SMS SENT ================= 📱');
+        logger.info(`To: ${phone}`);
+        logger.info(`Message: ${message}`);
+        logger.info('==================================================');
 
         return Promise.resolve(true);
     }
@@ -360,9 +361,9 @@ class NotificationService {
                     subject,
                     html
                 });
-                console.log(`✅ Admin notification sent to ${adminEmail}`);
+                logger.info(`✅ Admin notification sent to ${adminEmail}`);
             } catch (error) {
-                console.error(`❌ Error notifying admin ${adminEmail}:`, error.message);
+                logger.error(`❌ Error notifying admin ${adminEmail}:`, error.message);
             }
         } else {
             this.logEmailToConsole(adminEmail, subject, `Driver ${driverName} uploaded documents`);
@@ -370,11 +371,11 @@ class NotificationService {
     }
 
     logEmailToConsole(to, subject, body) {
-        console.log('📧 ================= EMAIL SENT ================= 📧');
-        console.log(`To: ${to}`);
-        console.log(`Subject: ${subject}`);
-        console.log('Content (preview):', body.substring(0, 100) + '...');
-        console.log('====================================================');
+        logger.info('📧 ================= EMAIL SENT ================= 📧');
+        logger.info(`To: ${to}`);
+        logger.info(`Subject: ${subject}`);
+        logger.info('Content (preview):', body.substring(0, 100) + '...');
+        logger.info('====================================================');
     }
 }
 
