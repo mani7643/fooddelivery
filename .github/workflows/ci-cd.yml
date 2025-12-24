@@ -145,6 +145,9 @@ jobs:
                sudo service nginx reload || sudo systemctl reload nginx
                echo "Nginx reloaded."
             fi
+
+            # Increase virtual memory for Elasticsearch
+            sudo sysctl -w vm.max_map_count=262144
             
             # Create/Update .env file with secrets
             echo "NODE_ENV=production" > .env
