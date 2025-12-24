@@ -6,6 +6,7 @@ import Driver from '../models/Driver.js';
 import PhoneVerification from '../models/PhoneVerification.js';
 import EmailVerification from '../models/EmailVerification.js';
 import notificationService from '../services/notificationService.js';
+import logger from '../config/logger.js';
 
 const router = express.Router();
 
@@ -307,6 +308,9 @@ router.post('/login', async (req, res) => {
                 };
             }
         }
+
+        // Log successful login
+        logger.info(`✅ User Logged In: ${user.email} (${user.role})`);
 
         res.json({
             success: true,

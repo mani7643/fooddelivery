@@ -16,6 +16,8 @@ import documentRoutes from './routes/documentRoutes.js'; // Added document route
 
 // Import socket handler
 import socketHandler from './socket/socketHandler.js';
+import logger from './config/logger.js';
+import requestLogger from './middleware/requestLogger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -61,6 +63,9 @@ app.use(cors({
     },
     credentials: true
 }));
+
+// Use ELK Request Logger
+app.use(requestLogger);
 
 // Global Request Logger - Debugging CloudFront/Uploads
 export let lastGlobalRequest = null;
@@ -144,6 +149,11 @@ app.get('/', (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
+    logger.error(err.message, {
+        stack: err.stack,
+        method: req.method,
+        url: req.url
+    });
     console.error(err.stack);
     res.status(500).json({
         message: 'Something went wrong!',
@@ -154,9 +164,9 @@ app.use((err, req, res, next) => {
 // Start server
 const PORT = process.env.PORT || 8000;
 httpServer.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📡 Socket.io server ready`);
-    console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+    logger.info(`🚀 Server running on port ${PORT}`);
+    logger.info(`📡 Socket.io server ready`);
+    logger.info(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
 export default app;
