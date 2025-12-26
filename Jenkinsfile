@@ -76,41 +76,31 @@ pipeline {
             steps {
                 sshagent([SSH_KEY_ID]) {
                     sh """
-                        # Create app directory if not exists
                         ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'mkdir -p ~/app'
                         
-                        # Copy docker-compose
                         scp -o StrictHostKeyChecking=no docker-compose.yml ${EC2_USER}@${EC2_HOST}:~/app/docker-compose.yml
                         
-                        # Execute Remote Deployment Script
                         ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'bash -s' << 'EOF'
-                            set -e
-                            cd ~/app
-                            
-                            # LOGIN TO GHCR
-                            echo "${GITHUB_TOKEN_VAL}" | sudo docker login ghcr.io -u ${GITHUB_USER_VAL} --password-stdin
+set -e
+cd ~/app
 
-                            # Install Docker if missing
-                            if ! command -v docker &> /dev/null; then
-                                echo "Installing Docker..."
-                                sudo yum update -y && sudo yum install -y docker
-                                sudo service docker start
-                                sudo usermod -aG docker ${EC2_USER}
-                            fi
+echo "${GITHUB_TOKEN_VAL}" | sudo docker login ghcr.io -u ${GITHUB_USER_VAL} --password-stdin
 
-                            # Install Docker Compose if missing
-                            if ! command -v docker-compose &> /dev/null; then
-                                echo "Installing Docker Compose..."
-                                sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-\$(uname -s)-\$(uname -m)" -o /usr/local/bin/docker-compose
-                                sudo chmod +x /usr/local/bin/docker-compose
-                                sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose || true
-                            fi
+if ! command -v docker &> /dev/null; then
+    sudo yum update -y && sudo yum install -y docker
+    sudo service docker start
+    sudo usermod -aG docker ${EC2_USER}
+fi
 
-                            # Fix ELK Memory
-                            sudo sysctl -w vm.max_map_count=262144
+if ! command -v docker-compose &> /dev/null; then
+    sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-\$(uname -s)-\$(uname -m)" -o /usr/local/bin/docker-compose
+    sudo chmod +x /usr/local/bin/docker-compose
+    sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose || true
+fi
 
-                            # Create .env file
-                            cat > .env <<ENV
+sudo sysctl -w vm.max_map_count=262144
+
+cat > .env <<ENV
 NODE_ENV=production
 PORT=8000
 MONGO_URI=${MONGO_URI}
@@ -126,11 +116,10 @@ AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
 AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 ENV
 
-                            # Deploy
-                            sudo docker-compose pull
-                            sudo docker-compose up -d --force-recreate --remove-orphans
-                            sudo docker image prune -f
-                        EOF
+sudo docker-compose pull
+sudo docker-compose up -d --force-recreate --remove-orphans
+sudo docker image prune -f
+EOF
                     """
                 }
             }
