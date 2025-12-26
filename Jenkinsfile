@@ -139,32 +139,23 @@ ENV
             steps {
                 sshagent([SSH_KEY_ID]) {
                     sh """
-                        # Prepare Remote Directory
                         ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'mkdir -p ~/frontend-deploy-temp'
                         
-                        # Copy Build Artifacts
                         scp -o StrictHostKeyChecking=no -r frontend/dist ${EC2_USER}@${EC2_HOST}:~/frontend-deploy-temp/dist
                         
-                        # Sync to S3 & Invalidate CloudFront
                         ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'bash -s' << 'EOF'
                             set -e
                             
-                            # Ensure AWS CLI
                             if ! command -v aws &> /dev/null; then
                                 sudo yum install -y aws-cli || sudo apt-get install -y awscli
                             fi
 
-                            # Sync to S3
-                            echo "Syncing to S3..."
                             aws s3 sync ~/frontend-deploy-temp/dist s3://${AWS_FRONTEND_BUCKET_NAME}
 
-                            # Invalidate Cache
                             if [ ! -z "${CLOUDFRONT_DISTRIBUTION_ID}" ]; then
-                                echo "Invalidating CloudFront..."
                                 aws cloudfront create-invalidation --distribution-id ${CLOUDFRONT_DISTRIBUTION_ID} --paths "/*"
                             fi
 
-                            # Cleanup
                             rm -rf ~/frontend-deploy-temp
                         EOF
                     """
