@@ -16,8 +16,6 @@ services:
       - EMAIL_PASS=${EMAIL_PASS}
       - AWS_REGION=${AWS_REGION}
       - AWS_BUCKET_NAME=${AWS_BUCKET_NAME}
-      - AWS_BUCKET_NAME=${AWS_BUCKET_NAME}
-      # Add Email configs here if needed for prod
     depends_on:
       - mongo
     networks:
@@ -42,11 +40,53 @@ services:
     networks:
       - app-network
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.9
+    container_name: elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      - app-network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.9
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - app-network
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    user: root
+    ports:
+      - "9090:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - app-network
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+
 networks:
   app-network:
     driver: bridge
 
 volumes:
   mongo-data:
-
-
+  elasticsearch-data:
+  jenkins_home:
