@@ -31,6 +31,10 @@ pipeline {
         // Credentials IDs
         GITHUB_CREDS_ID = 'github-token' // Username/Password (Token) for GHCR
         SSH_KEY_ID = 'ec2-ssh-key'       // SSH Private Key for EC2
+        
+        // Credentials for Remote Login
+        GITHUB_USER_VAL = credentials('github-username') // You need to add this
+        GITHUB_TOKEN_VAL = credentials('github-token-secret') // You need to add this
     }
 
     stages {
@@ -82,6 +86,10 @@ pipeline {
                         ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'bash -s' << 'EOF'
                             set -e
                             cd ~/app
+                            
+                            # LOGIN TO GHCR (REQUIRED)
+                            echo "${GITHUB_TOKEN_VAL}" | sudo docker login ghcr.io -u ${GITHUB_USER_VAL} --password-stdin
+
 
                             # 1. Install Docker/Compose if missing (Simplified for brevity, assumes standard deployment)
                             if ! command -v docker &> /dev/null; then
