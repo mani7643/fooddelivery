@@ -83,21 +83,22 @@ pipeline {
                         scp -o StrictHostKeyChecking=no docker-compose.yml ${EC2_USER}@${EC2_HOST}:~/app/docker-compose.yml
                         
                         # Execute Remote Deployment Script
-                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} """
+                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'bash -s' <<EOF
                             set -e
                             cd ~/app
                             
-                            # LOGIN TO GHCR (REQUIRED)
+                            # LOGIN TO GHCR
                             echo "${GITHUB_TOKEN_VAL}" | sudo docker login ghcr.io -u ${GITHUB_USER_VAL} --password-stdin
 
-
-                            # 1. Install Docker/Compose if missing (Simplified for brevity, assumes standard deployment)
+                            # Install Docker if missing
                             if ! command -v docker &> /dev/null; then
                                 echo "Installing Docker..."
                                 sudo yum update -y && sudo yum install -y docker
                                 sudo service docker start
                                 sudo usermod -aG docker ${EC2_USER}
                             fi
+
+                            # Install Docker Compose if missing
                             if ! command -v docker-compose &> /dev/null; then
                                 echo "Installing Docker Compose..."
                                 sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-\$(uname -s)-\$(uname -m)" -o /usr/local/bin/docker-compose
@@ -105,10 +106,10 @@ pipeline {
                                 sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose || true
                             fi
 
-                            # 2. Fix ELK Memory (Max Map Count)
+                            # Fix ELK Memory
                             sudo sysctl -w vm.max_map_count=262144
 
-                            # 3. Create .env file dynamically
+                            # Create .env file
                             cat > .env <<ENV
 NODE_ENV=production
 PORT=8000
@@ -125,11 +126,7 @@ AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
 AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 ENV
 
-                            # 4. Login to GHCR (requires passing creds safely, skipping valid login for public read or authenticated pull logic required)
-                            # Note: For private images, you need to docker login on the server. 
-                            # Simplest way: Pass the token via secret text variable "GITHUB_TOKEN" if needed.
-
-                            # 5. Deploy
+                            # Deploy
                             sudo docker-compose pull
                             sudo docker-compose up -d --force-recreate --remove-orphans
                             sudo docker image prune -f
