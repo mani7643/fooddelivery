@@ -83,7 +83,7 @@ pipeline {
                         scp -o StrictHostKeyChecking=no docker-compose.yml ${EC2_USER}@${EC2_HOST}:~/app/docker-compose.yml
                         
                         # Execute Remote Deployment Script
-                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'bash -s' <<EOF
+                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'bash -s' << 'EOF'
                             set -e
                             cd ~/app
                             
@@ -130,7 +130,8 @@ ENV
                             sudo docker-compose pull
                             sudo docker-compose up -d --force-recreate --remove-orphans
                             sudo docker image prune -f
-                        """"""
+                        EOF
+                    """
                 }
             }
         }
