@@ -98,8 +98,8 @@ if ! command -v docker-compose &> /dev/null; then
     sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose || true
 fi
 
-# Removed ELK Config
-# sudo sysctl -w vm.max_map_count=262144
+# Required for ELK Stack
+sudo sysctl -w vm.max_map_count=262144
 
 cat > .env <<ENV
 NODE_ENV=production
