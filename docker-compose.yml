@@ -2,6 +2,7 @@ services:
   backend:
     build: ./backend
     image: ghcr.io/mani7643/fooddelivery-backend:latest
+    restart: always
     ports:
       - "8000:8000"
     environment:
@@ -25,6 +26,7 @@ services:
   frontend:
     build: ./frontend
     image: ghcr.io/mani7643/fooddelivery-frontend:latest
+    restart: always
     ports:
       - "5173:80"
     depends_on:
@@ -34,6 +36,7 @@ services:
 
   mongo:
     image: mongo:latest
+    restart: always
     ports:
       - "27017:27017"
     volumes:
@@ -44,10 +47,11 @@ services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.9
     container_name: elasticsearch
+    restart: always
     environment:
       - node.name=elasticsearch
       - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ports:
       - "9200:9200"
     volumes:
@@ -58,6 +62,7 @@ services:
   kibana:
     image: docker.elastic.co/kibana/kibana:7.17.9
     container_name: kibana
+    restart: always
     ports:
       - "5601:5601"
     environment:
@@ -70,6 +75,7 @@ services:
   jenkins:
     image: jenkins/jenkins:lts
     container_name: jenkins
+    restart: always
     user: root
     ports:
       - "9090:8080"
