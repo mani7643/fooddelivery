@@ -76,7 +76,7 @@ pipeline {
             steps {
                 sshagent([SSH_KEY_ID]) {
                     sh """
-                        ssh -vvv -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'mkdir -p ~/app'
+                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'mkdir -p ~/app'
                         
                         scp -o StrictHostKeyChecking=no docker-compose.yml ${EC2_USER}@${EC2_HOST}:~/app/docker-compose.yml
                         
@@ -134,20 +134,20 @@ EOF
                         scp -o StrictHostKeyChecking=no -r frontend/dist ${EC2_USER}@${EC2_HOST}:~/frontend-deploy-temp/dist
                         
                         ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'bash -s' << 'EOF'
-                            set -e
-                            
-                            if ! command -v aws &> /dev/null; then
-                                sudo yum install -y aws-cli || sudo apt-get install -y awscli
-                            fi
+set -e
 
-                            aws s3 sync ~/frontend-deploy-temp/dist s3://${AWS_FRONTEND_BUCKET_NAME}
+if ! command -v aws &> /dev/null; then
+    sudo yum install -y aws-cli || sudo apt-get install -y awscli
+fi
 
-                            if [ ! -z "${CLOUDFRONT_DISTRIBUTION_ID}" ]; then
-                                aws cloudfront create-invalidation --distribution-id ${CLOUDFRONT_DISTRIBUTION_ID} --paths "/*"
-                            fi
+aws s3 sync ~/frontend-deploy-temp/dist s3://${AWS_FRONTEND_BUCKET_NAME}
 
-                            rm -rf ~/frontend-deploy-temp
-                        EOF
+if [ ! -z "${CLOUDFRONT_DISTRIBUTION_ID}" ]; then
+    aws cloudfront create-invalidation --distribution-id ${CLOUDFRONT_DISTRIBUTION_ID} --paths "/*"
+fi
+
+rm -rf ~/frontend-deploy-temp
+EOF
                     """
                 }
             }
