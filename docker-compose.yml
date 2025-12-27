@@ -16,6 +16,7 @@ services:
       - EMAIL_PASS=${EMAIL_PASS}
       - AWS_REGION=${AWS_REGION}
       - AWS_BUCKET_NAME=${AWS_BUCKET_NAME}
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
     depends_on:
       - mongo
     networks:
