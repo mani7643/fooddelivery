@@ -130,11 +130,11 @@ EOF
             steps {
                 sshagent([SSH_KEY_ID]) {
                     sh """
-                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'mkdir -p ~/frontend-deploy-temp'
+                        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=60 -o BatchMode=yes ${EC2_USER}@${EC2_HOST} 'mkdir -p ~/frontend-deploy-temp'
                         
-                        scp -o StrictHostKeyChecking=no -r frontend/dist ${EC2_USER}@${EC2_HOST}:~/frontend-deploy-temp/dist
+                        scp -o StrictHostKeyChecking=no -o ConnectTimeout=60 -o BatchMode=yes -r frontend/dist ${EC2_USER}@${EC2_HOST}:~/frontend-deploy-temp/dist
                         
-                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'bash -s' << 'EOF'
+                        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=60 -o BatchMode=yes ${EC2_USER}@${EC2_HOST} 'bash -s' << 'EOF'
 set -e
 
 if ! command -v aws &> /dev/null; then
