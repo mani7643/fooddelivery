@@ -76,11 +76,11 @@ pipeline {
             steps {
                 sshagent([SSH_KEY_ID]) {
                     sh """
-                        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 -o BatchMode=yes ${EC2_USER}@${EC2_HOST} 'mkdir -p ~/app'
+                        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=60 -o BatchMode=yes ${EC2_USER}@${EC2_HOST} 'mkdir -p ~/app'
                         
-                        scp -o StrictHostKeyChecking=no -o ConnectTimeout=20 -o BatchMode=yes docker-compose.yml ${EC2_USER}@${EC2_HOST}:~/app/docker-compose.yml
+                        scp -o StrictHostKeyChecking=no -o ConnectTimeout=60 -o BatchMode=yes docker-compose.yml ${EC2_USER}@${EC2_HOST}:~/app/docker-compose.yml
                         
-                        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 -o BatchMode=yes ${EC2_USER}@${EC2_HOST} 'bash -s' << 'EOF'
+                        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=60 -o BatchMode=yes ${EC2_USER}@${EC2_HOST} 'bash -s' << 'EOF'
 set -e
 cd ~/app
 
