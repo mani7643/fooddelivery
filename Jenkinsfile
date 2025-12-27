@@ -76,11 +76,11 @@ pipeline {
             steps {
                 sshagent([SSH_KEY_ID]) {
                     sh """
-                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'mkdir -p ~/app'
+                        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 -o BatchMode=yes ${EC2_USER}@${EC2_HOST} 'mkdir -p ~/app'
                         
-                        scp -o StrictHostKeyChecking=no docker-compose.yml ${EC2_USER}@${EC2_HOST}:~/app/docker-compose.yml
+                        scp -o StrictHostKeyChecking=no -o ConnectTimeout=20 -o BatchMode=yes docker-compose.yml ${EC2_USER}@${EC2_HOST}:~/app/docker-compose.yml
                         
-                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'bash -s' << 'EOF'
+                        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 -o BatchMode=yes ${EC2_USER}@${EC2_HOST} 'bash -s' << 'EOF'
 set -e
 cd ~/app
 
@@ -98,7 +98,8 @@ if ! command -v docker-compose &> /dev/null; then
     sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose || true
 fi
 
-sudo sysctl -w vm.max_map_count=262144
+# Removed ELK Config
+# sudo sysctl -w vm.max_map_count=262144
 
 cat > .env <<ENV
 NODE_ENV=production
