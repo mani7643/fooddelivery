@@ -1,0 +1,13 @@
+health status index                                                 uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+green  open   .geoip_databases                                      VDfRNd3oTFuHuvRZdTAL2w   1   0         41            0     39.2mb         39.2mb
+yellow open   courier-service-2025.12.26                            bq2GOrYITJaDKGDTh6MLOQ   1   1         89            0     42.3kb         42.3kb
+yellow open   .ds-logs-courier-backend-2025.12.24-2025.12.24-000001 f-ToMMq_TMavA8hWvxCTsA   1   1          0            0       226b           226b
+yellow open   courier-service-2025.12.27                            F6XXxxrHRfq3iGI5JoX6yA   1   1         39            0     86.6kb         86.6kb
+yellow open   courier-service-2025.12.29                            zTAbcOTMSHSCTs5tZnH_0Q   1   1          7            0     25.9kb         25.9kb
+green  open   .apm-custom-link                                      mwIK45ZcQtybfPNS-54ChQ   1   0          0            0       226b           226b
+green  open   .kibana_7.17.9_001                                    8FBy012QRa6UaTUELOJC1Q   1   0        348          108      4.8mb          4.8mb
+yellow open   courier-service-2025.12.24                            P7RDXFyuRcqrsaRV954MmA   1   1         82            0     70.3kb         70.3kb
+green  open   .kibana_task_manager_7.17.9_001                       m7cScUlPSlK1ZwkQi4BWRA   1   0         17          540      5.4mb          5.4mb
+green  open   .apm-agent-configuration                              BaKXXG0ISUieu70-mI7n_w   1   0          0            0       226b           226b
+green  open   .async-search                                         RRSftNKSSFCOEqlS4bNROg   1   0         26           26     39.1kb         39.1kb
+green  open   .tasks                                                IKLqt0kTT72TxyFHaVaOZg   1   0          7            0     47.9kb         47.9kb

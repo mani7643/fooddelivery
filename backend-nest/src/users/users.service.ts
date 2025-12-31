@@ -13,10 +13,26 @@ export class UsersService {
     }
 
     async findOne(email: string): Promise<User | null> {
+<<<<<<< HEAD
         return this.userModel.findOne({ email }).select('+password').exec();
+=======
+        if (!email) return null;
+        return this.userModel.findOne({ email: email.toLowerCase() }).select('+password').exec();
+>>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
     }
 
     async findById(id: string): Promise<User | null> {
         return this.userModel.findById(id).exec();
     }
+<<<<<<< HEAD
+=======
+
+    async delete(id: string): Promise<any> {
+        return this.userModel.findByIdAndDelete(id).exec();
+    }
+
+    async countAdmins(): Promise<number> {
+        return this.userModel.countDocuments({ role: 'admin' }).exec();
+    }
+>>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
 }

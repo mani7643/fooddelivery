@@ -16,6 +16,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
                     clientOpts: { node: esUrl },
                     indexPrefix: 'courier-service',
                     source: 'backend-nest',
+<<<<<<< HEAD
+=======
+                    buffering: false,
+                    flushInterval: 2000,
+>>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
                 };
 
                 const transports: winston.transport[] = [

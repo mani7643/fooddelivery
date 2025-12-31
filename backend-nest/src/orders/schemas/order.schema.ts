@@ -36,7 +36,11 @@ class Location {
 @Schema({ timestamps: true })
 export class Order {
     @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Restaurant', required: true })
+<<<<<<< HEAD
     restaurantId: MongooseSchema.Types.ObjectId; // Keeping standard ObjectId until Restaurant Module exists
+=======
+    restaurantId: MongooseSchema.Types.ObjectId;
+>>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
 
     @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
     customerId: User;
@@ -50,7 +54,11 @@ export class Order {
     @Prop({ required: true, min: 0 })
     totalAmount: number;
 
+<<<<<<< HEAD
     @Prop({ type: Location, index: '2dsphere' })
+=======
+    @Prop({ type: Location })
+>>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
     pickupLocation: Location;
 
     @Prop({ type: Location })

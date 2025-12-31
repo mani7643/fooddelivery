@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
@@ -6,3 +7,12 @@
     "deleteOutDir": true
   }
 }
+=======
+    "$schema": "https://json.schemastore.org/nest-cli",
+    "collection": "@nestjs/schematics",
+    "sourceRoot": "src",
+    "compilerOptions": {
+        "deleteOutDir": true
+    }
+}
+>>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)

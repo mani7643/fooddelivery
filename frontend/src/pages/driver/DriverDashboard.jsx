@@ -36,18 +36,22 @@ export default function DriverDashboard() {
 
             // Logic to restore online status if persisted
             const persistedStatus = localStorage.getItem('driver_online_pref') === 'true';
-            const serverStatus = profileData.driver.isAvailable;
 
-            // If user intends to be online but server says offline (likely due to refresh/disconnect),
-            // restore the online status.
-            if (persistedStatus && !serverStatus) {
-                console.log('Restoring online status from preference...');
-                await driverService.toggleAvailability(true);
-                setIsAvailable(true);
+            // Always enforce persistence on mount to handle race conditions
+            if (persistedStatus) {
+                console.log('Enforcing online status from preference...');
+                setIsAvailable(true); // Optimistic update
+                try {
+                    await driverService.toggleAvailability(true);
+                } catch (err) {
+                    console.error('Failed to sync availability:', err);
+                    // Don't revert here immediately to avoid flickering, 
+                    // but maybe show a toast. 
+                    // If it failed, the backend might still be offline, 
+                    // but we want the USER to see Online if they intend to be.
+                }
             } else {
-                // Otherwise, respect server status and sync local preference
-                setIsAvailable(serverStatus);
-                localStorage.setItem('driver_online_pref', serverStatus);
+                setIsAvailable(profileData.driver.isAvailable);
             }
 
             setActiveOrders(ordersData.orders);

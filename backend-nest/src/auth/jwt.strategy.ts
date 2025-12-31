@@ -18,6 +18,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     async validate(payload: any) {
+<<<<<<< HEAD
         const user = await this.usersService.findById(payload.id);
         if (!user) {
             throw new UnauthorizedException();
@@ -31,6 +32,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             // But strategy validate usually returns the user object.
             // Let's attach status to user and handle in Guard or controller.
         }
+=======
+        // Payload has sub (id) and email usually
+        const user = await this.usersService.findById(payload.sub);
+        if (!user) {
+            throw new UnauthorizedException();
+        }
+        // Check account status if needed (e.g. pending admin)
+        // Original middleware: if (user.role === 'admin' && user.accountStatus === 'pending') -> 403
+        // We can do it here or in Guards.
+>>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
         return user;
     }
 }

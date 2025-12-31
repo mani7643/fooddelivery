@@ -2,13 +2,21 @@ import { Injectable, NotFoundException, BadRequestException, ForbiddenException 
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Order, OrderDocument } from './schemas/order.schema';
+<<<<<<< HEAD
 import { DriversService } from '../drivers/drivers.service'; // Assuming export
+=======
+import { DriversService } from '../drivers/drivers.service';
+>>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
 
 @Injectable()
 export class OrdersService {
     constructor(
         @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
+<<<<<<< HEAD
         private driversService: DriversService, // You might need to add logic in DriversService to update status
+=======
+        private driversService: DriversService,
+>>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
     ) { }
 
     async findAvailableOrders(): Promise<Order[]> {
@@ -22,6 +30,7 @@ export class OrdersService {
         }
         return order;
     }
+<<<<<<< HEAD
 
     async acceptOrder(orderId: string, driverUserId: string) {
         // We need driverId based on userId usually, or assuming driverUserId is passed correctly
@@ -87,5 +96,12 @@ export class OrdersService {
         // I will FIX this logic here.
 
         return { status: 'Not fully implemented without DriversService helper' };
+=======
+    async findActiveOrdersForDriver(driverId: string): Promise<Order[]> {
+        return this.orderModel.find({
+            driverId: driverId,
+            status: { $in: ['accepted', 'pickedUp', 'enRoute'] }
+        }).exec();
+>>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
     }
 }

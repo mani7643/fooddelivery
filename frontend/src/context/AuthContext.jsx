@@ -18,12 +18,25 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Check for stored user on mount
-        const storedUser = authService.getStoredUser();
-        if (storedUser) {
-            setUser(storedUser);
-        }
-        setLoading(false);
+        // Check for stored user and validate token on mount
+        const initAuth = async () => {
+            const storedUser = authService.getStoredUser();
+            const token = authService.getToken();
+
+            if (storedUser && token) {
+                try {
+                    // Optional: Verify token valid with backend
+                    const userData = await authService.getCurrentUser();
+                    setUser(userData.user);
+                } catch (error) {
+                    console.error('Token invalid or expired', error);
+                    authService.logout();
+                }
+            }
+            setLoading(false);
+        };
+
+        initAuth();
     }, []);
 
     const login = async (credentials) => {
