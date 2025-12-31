@@ -40,7 +40,8 @@ export default function AdminVerifications() {
     const getDocumentUrl = (path) => {
         if (!path) return '';
         if (path.startsWith('http')) return path;
-        return `${import.meta.env.VITE_API_URL.replace('/api', '')}${path}`;
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+        return `${apiUrl.replace('/api', '')}${path}`;
     };
 
     const [drivers, setDrivers] = useState([]);
@@ -73,9 +74,11 @@ export default function AdminVerifications() {
                 // Helper to sign a single URL
                 const sign = async (key, fileUrl) => {
                     if (!fileUrl) return;
-                    // If local, ignore
-                    if (!fileUrl.startsWith('http')) {
-                        urls[key] = `${import.meta.env.VITE_API_URL.replace('/api', '')}${fileUrl}`;
+                    // If it's a legacy local file (starts with /), just append API URL. 
+                    // Otherwise (S3 key or full http URL), request signing.
+                    if (fileUrl.startsWith('/')) {
+                        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+                        urls[key] = `${apiUrl.replace('/api', '')}${fileUrl}`;
                         return;
                     }
                     try {
@@ -113,9 +116,10 @@ export default function AdminVerifications() {
 
         // If it's already a full signed URL or external URL (rare), just open it
         // Or if it's a local file URL logic
-        if (!fileUrl.startsWith('http')) {
-            // Local file, use existing logic inside getDocumentUrl but we can just construct it here
-            const localUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}${fileUrl}`;
+        if (fileUrl.startsWith('/')) {
+            // Local file
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+            const localUrl = `${apiUrl.replace('/api', '')}${fileUrl}`;
             window.open(localUrl, '_blank');
             return;
         }
@@ -637,7 +641,8 @@ export default function AdminVerifications() {
                 ) : (
                     <>
                         {/* DRIVER VERIFICATIONS LIST & VERIFIED LIST & REJECTED LIST & SEARCH RESULTS */}
-                        {(viewMode === 'verifications' || viewMode === 'verified' || viewMode === 'rejected' || ((viewMode === 'online' || viewMode === 'admins') && searchQuery)) && (
+                        {/* DRIVER VERIFICATIONS, VERIFIED, REJECTED, SEARCH RESULTS */}
+                        {(viewMode === 'verifications' || viewMode === 'verified' || viewMode === 'rejected' || ((viewMode === 'online') && searchQuery)) && (
                             drivers.length === 0 ? (
                                 <div className="glass" style={{
                                     padding: 'var(--space-12)',
@@ -705,6 +710,65 @@ export default function AdminVerifications() {
                             )
                         )}
 
+                        {/* PENDING ADMINS LIST */}
+                        {viewMode === 'admins' && (
+                            admins.length === 0 ? (
+                                <div className="glass" style={{
+                                    padding: 'var(--space-12)',
+                                    borderRadius: 'var(--radius-2xl)',
+                                    textAlign: 'center'
+                                }}>
+                                    <div style={{ fontSize: '64px', marginBottom: 'var(--space-4)' }}>
+                                        🛡️
+                                    </div>
+                                    <h3 style={{ fontSize: 'var(--font-size-xl)', marginBottom: 'var(--space-2)' }}>
+                                        No Pending Admins
+                                    </h3>
+                                    <p style={{ color: 'var(--text-secondary)' }}>
+                                        All admin accounts are approved.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div style={{ display: 'grid', gap: 'var(--space-4)' }}>
+                                    {admins.map((admin) => (
+                                        <div
+                                            key={admin._id}
+                                            className="glass"
+                                            style={{
+                                                padding: 'var(--space-6)',
+                                                borderRadius: 'var(--radius-xl)',
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center'
+                                            }}
+                                        >
+                                            <div>
+                                                <h3 style={{
+                                                    fontSize: 'var(--font-size-lg)',
+                                                    fontWeight: 'var(--font-weight-semibold)',
+                                                    marginBottom: 'var(--space-2)'
+                                                }}>
+                                                    {admin.name}
+                                                </h3>
+                                                <div style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-sm)' }}>
+                                                    <p>📧 {admin.email}</p>
+                                                    <p>📅 Registered: {new Date(admin.createdAt).toLocaleDateString()}</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => handleApproveAdmin(admin._id)}
+                                                className="btn btn-primary"
+                                                disabled={actionLoading}
+                                                style={{ padding: 'var(--space-3) var(--space-6)' }}
+                                            >
+                                                Approve Admin
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )
+                        )}
+
                         {/* ONLINE DRIVERS MAP */}
                         {viewMode === 'online' && (
                             <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 'var(--space-6)', height: '600px' }}>
@@ -728,22 +792,25 @@ export default function AdminVerifications() {
                                         <button
                                             onClick={() => {
                                                 // Only for demo/testing purposes
-                                                setOnlineDrivers(prev => prev.map(d => {
-                                                    const [lng, lat] = d.currentLocation.coordinates;
-                                                    // Check if near 0,0 (Ocean) or invalid
-                                                    const isZero = !lat || !lng || (Math.abs(lat) < 1 && Math.abs(lng) < 1);
+                                                if (socket && onlineDrivers.length > 0) {
+                                                    onlineDrivers.forEach(d => {
+                                                        const [lng, lat] = d.currentLocation.coordinates;
+                                                        // Check if near 0,0 (Ocean) or invalid
+                                                        const isZero = !lat || !lng || (Math.abs(lat) < 1 && Math.abs(lng) < 1);
 
-                                                    // If zero, jump to Hyderabad, India. Else add noise.
-                                                    const newLng = isZero ? 78.9629 : lng + (Math.random() - 0.5) * 0.01;
-                                                    const newLat = isZero ? 20.5937 : lat + (Math.random() - 0.5) * 0.01;
+                                                        // If zero, jump to Hyderabad, India. Else add noise.
+                                                        const newLng = isZero ? 78.9629 : lng + (Math.random() - 0.5) * 0.01;
+                                                        const newLat = isZero ? 20.5937 : lat + (Math.random() - 0.5) * 0.01;
 
-                                                    return {
-                                                        ...d,
-                                                        currentLocation: {
-                                                            coordinates: [newLng, newLat]
-                                                        }
-                                                    };
-                                                }));
+                                                        socket.emit('updateLocation', {
+                                                            driverId: d._id,
+                                                            location: {
+                                                                latitude: newLat,
+                                                                longitude: newLng
+                                                            }
+                                                        });
+                                                    });
+                                                }
                                             }}
                                             style={{ fontSize: '0.7rem', padding: '2px 6px', opacity: 0.5 }}
                                         >
