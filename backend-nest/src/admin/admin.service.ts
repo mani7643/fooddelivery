@@ -31,19 +31,11 @@ export class AdminService {
         driver.verificationNotes = notes || '';
         if (status === 'verified') {
             driver.verifiedAt = new Date();
-<<<<<<< HEAD
-            driver.verifiedBy = adminId as any; // Cast if User type mismatch
-=======
             driver.verifiedBy = adminId as any;
->>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
         }
 
         await driver.save();
 
-<<<<<<< HEAD
-        // Notifications
-=======
->>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
         const { email, name } = driver.userId;
         if (status === 'verified') {
             await this.notificationService.sendVerificationApprovalEmail(email, name);

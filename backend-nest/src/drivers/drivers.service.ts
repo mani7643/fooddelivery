@@ -1,23 +1,10 @@
-<<<<<<< HEAD
-import { Injectable } from '@nestjs/common';
-=======
 import { Injectable, Logger } from '@nestjs/common';
->>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Driver, DriverDocument } from './schemas/driver.schema';
 
 @Injectable()
 export class DriversService {
-<<<<<<< HEAD
-    constructor(@InjectModel(Driver.name) private driverModel: Model<DriverDocument>) { }
-
-    async findByUserId(userId: string): Promise<DriverDocument | null> {
-        return this.driverModel.findOne({ userId: userId as any }).exec();
-    }
-
-    async updateAvailability(driverId: string, isAvailable: boolean) {
-=======
     private readonly logger = new Logger(DriversService.name);
 
     constructor(@InjectModel(Driver.name) private driverModel: Model<DriverDocument>) { }
@@ -39,23 +26,17 @@ export class DriversService {
 
     async updateAvailability(driverId: string, isAvailable: boolean) {
         this.logger.log(`Updating driver ${driverId} availability: ${isAvailable}`);
->>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
         return this.driverModel.findByIdAndUpdate(driverId, { isAvailable }, { new: true }).exec();
     }
 
     async updateStatus(userId: string, isAvailable: boolean, currentStatus: string) {
-<<<<<<< HEAD
-=======
         this.logger.log(`Updating driver status for user ${userId}: ${currentStatus} (${isAvailable})`);
->>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
         return this.driverModel.findOneAndUpdate(
             { userId: userId as any },
             { isAvailable, currentStatus },
             { new: true }
         ).exec();
     }
-<<<<<<< HEAD
-=======
 
     async updateDocuments(driverId: string, documents: any) {
         this.logger.log(`Updating documents for driver ${driverId}`);
@@ -82,5 +63,4 @@ export class DriversService {
             { new: true }
         ).exec();
     }
->>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
 }

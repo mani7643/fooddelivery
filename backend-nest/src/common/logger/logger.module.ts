@@ -16,11 +16,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
                     clientOpts: { node: esUrl },
                     indexPrefix: 'courier-service',
                     source: 'backend-nest',
-<<<<<<< HEAD
-=======
                     buffering: false,
                     flushInterval: 2000,
->>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
                 };
 
                 const transports: winston.transport[] = [
@@ -34,8 +31,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
                 ];
 
                 // Only add ES transport if URL is provided or we strictly want it
-                // The original code had error handling for ES connection.
-                // winston-elasticsearch handles connection issues internally usually, but let's add it.
                 const esTransport = new ElasticsearchTransport(esTransportOpts);
 
                 esTransport.on('error', (error) => {

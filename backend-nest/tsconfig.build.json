@@ -1,15 +1,9 @@
 {
-<<<<<<< HEAD
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+  "exclude": [
+    "node_modules",
+    "test",
+    "dist",
+    "**/*spec.ts"
+  ]
 }
-=======
-    "extends": "./tsconfig.json",
-    "exclude": [
-        "node_modules",
-        "test",
-        "dist",
-        "**/*spec.ts"
-    ]
-}
->>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)

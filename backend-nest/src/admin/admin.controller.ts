@@ -1,10 +1,6 @@
 import { Controller, Get, Put, Query, Param, Body, UseGuards, Request, ForbiddenException } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-<<<<<<< HEAD
-// import { RolesGuard } from '../auth/guards/roles.guard';
-=======
->>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard)

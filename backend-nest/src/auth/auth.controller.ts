@@ -1,11 +1,3 @@
-<<<<<<< HEAD
-import { Controller } from '@nestjs/common';
-import { AuthService } from './auth.service';
-
-@Controller('auth')
-export class AuthController {
-    constructor(private readonly authService: AuthService) { }
-=======
 import { Controller, Post, Body, UnauthorizedException, Request, Get, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -42,5 +34,4 @@ export class AuthController {
     getProfile(@Request() req) {
         return { user: req.user };
     }
->>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
 }

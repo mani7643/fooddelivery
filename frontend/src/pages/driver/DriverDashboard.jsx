@@ -36,6 +36,7 @@ export default function DriverDashboard() {
 
             // Logic to restore online status if persisted
             const persistedStatus = localStorage.getItem('driver_online_pref') === 'true';
+            console.log('DEBUG: loadData - Persisted:', persistedStatus, 'Server Status:', profileData.driver.isAvailable);
 
             // Always enforce persistence on mount to handle race conditions
             if (persistedStatus) {

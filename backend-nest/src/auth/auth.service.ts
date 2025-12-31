@@ -1,22 +1,3 @@
-<<<<<<< HEAD
-import { Injectable } from '@nestjs/common';
-import { UsersService } from '../users/users.service';
-import { JwtService } from '@nestjs/jwt';
-
-@Injectable()
-export class AuthService {
-    constructor(
-        private usersService: UsersService,
-        private jwtService: JwtService,
-    ) { }
-
-    async login(user: any) {
-        const payload = { id: user._id };
-        return {
-            token: this.jwtService.sign(payload),
-            user,
-        };
-=======
 import { Injectable, BadRequestException, Logger, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
@@ -39,9 +20,6 @@ export class AuthService {
         private driversService: DriversService,
     ) { }
 
-    // ... existing sendEmailOtp ...
-
-    // ... existing verifyOtp ...
 
     async register(registerDto: any) {
         try {
@@ -100,10 +78,6 @@ export class AuthService {
             await this.emailVerificationModel.deleteOne({ email, otp }).exec();
 
             // 7. Generate Token
-            // Reload user to ensure fields for login
-            // const fullUser = await this.usersService.findOne(email); 
-            // actually login accepts the user object we just created if it has _id
-
             return this.login(user); // Reuse login logic to return token + user
         } catch (error) {
             this.logger.error('Registration error details:', {
@@ -142,7 +116,7 @@ export class AuthService {
             { upsert: true, new: true }
         ).exec();
 
-        await this.notificationService.sendOTP(email, otp);
+        await this.notificationService.sendOtpEmail(email, otp);
 
         return { success: true, message: 'OTP sent successfully' };
     }
@@ -224,6 +198,5 @@ export class AuthService {
             this.logger.error('Login error:', error);
             throw error;
         }
->>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
     }
 }

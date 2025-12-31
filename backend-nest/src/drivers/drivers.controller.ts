@@ -1,11 +1,3 @@
-<<<<<<< HEAD
-import { Controller } from '@nestjs/common';
-import { DriversService } from './drivers.service';
-
-@Controller('drivers')
-export class DriversController {
-    constructor(private readonly driversService: DriversService) { }
-=======
 import { Controller, Get, Put, Post, Body, UseGuards, Request, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { DriversService } from './drivers.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -43,8 +35,6 @@ export class DriversController {
         return { success: true, driver };
     }
 
-    // ... existing endpoints ...
-
     @UseGuards(JwtAuthGuard)
     @Put('availability')
     async updateAvailability(@Request() req, @Body() body: { isAvailable: boolean }) {
@@ -80,5 +70,4 @@ export class DriversController {
             verificationNotes: driver.verificationNotes
         };
     }
->>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
 }

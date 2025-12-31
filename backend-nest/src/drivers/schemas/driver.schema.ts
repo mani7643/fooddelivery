@@ -15,11 +15,7 @@ class Location {
 
     @Prop({
         type: [Number],
-<<<<<<< HEAD
         default: [0, 0],
-=======
-        required: true,
->>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
     })
     coordinates: number[];
 }
@@ -27,59 +23,41 @@ class Location {
 @Schema()
 class BankDetails {
     @Prop()
-<<<<<<< HEAD
     accountHolderName: string;
-=======
-    bankName: string;
->>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
 
     @Prop()
     accountNumber: string;
 
     @Prop()
     ifscCode: string;
-<<<<<<< HEAD
 
     @Prop()
     bankName: string;
-=======
->>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
 }
 
 @Schema()
 class Documents {
     @Prop()
     aadhaarFront: string;
-<<<<<<< HEAD
+
     @Prop()
     aadhaarBack: string;
+
     @Prop()
     dlFront: string;
+
     @Prop()
     dlBack: string;
+
     @Prop()
     panCard: string;
+
     @Prop()
     vehicleRC: string;
-=======
-
-    @Prop()
-    aadhaarBack: string;
-
-    @Prop()
-    dlFront: string;
-
-    @Prop()
-    dlBack: string;
-
-    @Prop()
-    panCard: string;
->>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
 }
 
 @Schema({ timestamps: true })
 export class Driver {
-<<<<<<< HEAD
     @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true, unique: true })
     userId: User;
 
@@ -110,7 +88,7 @@ export class Driver {
     })
     licenseNumber: string;
 
-    @Prop({ type: Location, index: '2dsphere' })
+    @Prop({ type: Location })
     currentLocation: Location;
 
     @Prop({ default: false })
@@ -128,74 +106,22 @@ export class Driver {
 
     @Prop({ default: 0 })
     totalDeliveries: number;
-=======
-    // We reference the User who is this driver
-    @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true, unique: true })
-    userId: User;
-
-    @Prop()
-    vehicleType: string;
-
-    @Prop()
-    vehicleNumber: string;
-
-    @Prop()
-    licenseNumber: string;
-
-    @Prop({
-        type: {
-            type: String,
-            enum: ['Point'],
-            default: 'Point',
-        },
-        coordinates: {
-            type: [Number],
-            default: [0, 0],
-        },
-        _id: false,
-    })
-    currentLocation: { type: string; coordinates: number[] };
-
-    @Prop({ default: true })
-    isAvailable: boolean;
-
-    @Prop({ default: 0 })
-    rating: number;
-
-    @Prop({ default: 0 })
-    totalRatings: number;
->>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
 
     @Prop({ default: 0 })
     totalEarnings: number;
 
-<<<<<<< HEAD
     @Prop({ default: 0 })
     todayEarnings: number;
-=======
-    @Prop({
-        type: String,
-        enum: ['idle', 'active', 'offline'],
-        default: 'offline',
-    })
-    currentStatus: string;
->>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
 
     @Prop({ type: BankDetails })
     bankDetails: BankDetails;
 
-<<<<<<< HEAD
     @Prop({ type: Documents })
     documents: Documents;
 
     @Prop({
         type: String,
         enum: ['pending_documents', 'pending_verification', 'verified', 'rejected'],
-=======
-    @Prop({
-        type: String,
-        enum: ['pending_verification', 'pending_documents', 'verified', 'rejected'],
->>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
         default: 'pending_documents',
     })
     verificationStatus: string;
@@ -208,12 +134,6 @@ export class Driver {
 
     @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
     verifiedBy: User;
-<<<<<<< HEAD
-=======
-
-    @Prop({ type: Documents })
-    documents: Documents;
->>>>>>> ba977d1 (fix: resolve online status race condition, add active orders endpoint, impl api logging)
 }
 
 export const DriverSchema = SchemaFactory.createForClass(Driver);
