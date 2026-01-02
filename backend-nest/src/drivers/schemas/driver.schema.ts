@@ -1,4 +1,4 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory, raw } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema } from 'mongoose';
 import { User } from '../../users/schemas/user.schema';
 
@@ -88,8 +88,11 @@ export class Driver {
     })
     licenseNumber: string;
 
-    @Prop({ type: Location })
-    currentLocation: Location;
+    @Prop(raw({
+        type: { type: String, enum: ['Point'], default: 'Point' },
+        coordinates: { type: [Number], default: [0, 0] }
+    }))
+    currentLocation: { type: string; coordinates: number[] };
 
     @Prop({ default: false })
     isAvailable: boolean;

@@ -1,4 +1,4 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory, raw } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema } from 'mongoose';
 import { User } from '../../users/schemas/user.schema';
 import { Driver } from '../../drivers/schemas/driver.schema';
@@ -50,11 +50,17 @@ export class Order {
     @Prop({ required: true, min: 0 })
     totalAmount: number;
 
-    @Prop({ type: Location })
-    pickupLocation: Location;
+    @Prop(raw({
+        type: { type: String, enum: ['Point'], default: 'Point' },
+        coordinates: { type: [Number] }
+    }))
+    pickupLocation: { type: string; coordinates: number[] };
 
-    @Prop({ type: Location })
-    dropoffLocation: Location;
+    @Prop(raw({
+        type: { type: String, enum: ['Point'], default: 'Point' },
+        coordinates: { type: [Number] }
+    }))
+    dropoffLocation: { type: string; coordinates: number[] };
 
     @Prop({
         type: String,

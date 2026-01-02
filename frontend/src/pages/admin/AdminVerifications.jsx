@@ -825,27 +825,39 @@ export default function AdminVerifications() {
                                         </div>
                                     ) : (
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-                                            {onlineDrivers.map(driver => (
-                                                <div
-                                                    key={driver._id}
-                                                    style={{
-                                                        padding: 'var(--space-3)',
-                                                        background: 'var(--bg-secondary)',
-                                                        borderRadius: 'var(--radius-md)',
-                                                        cursor: 'pointer',
-                                                        border: selectedDriver?._id === driver._id ? '1px solid var(--primary-500)' : '1px solid transparent'
-                                                    }}
-                                                    onClick={() => setSelectedDriver(driver)}
-                                                >
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                                                        <span style={{ fontWeight: 'bold' }}>{driver.userId.name}</span>
-                                                        <span style={{ fontSize: '0.8rem', color: '#10b981' }}>● Online</span>
+                                            {onlineDrivers.map(driver => {
+                                                const [lng, lat] = driver.currentLocation?.coordinates || [0, 0];
+                                                const isZero = !lat && !lng;
+
+                                                return (
+                                                    <div
+                                                        key={driver._id}
+                                                        style={{
+                                                            padding: 'var(--space-3)',
+                                                            background: 'var(--bg-secondary)',
+                                                            borderRadius: 'var(--radius-md)',
+                                                            cursor: 'pointer',
+                                                            border: selectedDriver?._id === driver._id ? '1px solid var(--primary-500)' : '1px solid transparent'
+                                                        }}
+                                                        onClick={() => setSelectedDriver(driver)}
+                                                    >
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                                            <span style={{ fontWeight: 'bold' }}>{driver.userId.name}</span>
+                                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                                                                <span style={{ fontSize: '0.8rem', color: '#10b981' }}>● Online</span>
+                                                                {isZero && (
+                                                                    <span style={{ fontSize: '0.7rem', color: 'var(--warning-500)', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                                                        ⚠️ No Location
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                                            {driver.vehicleType} • {driver.vehicleNumber}
+                                                        </div>
                                                     </div>
-                                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                                                        {driver.vehicleType} • {driver.vehicleNumber}
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     )}
                                 </div>
@@ -855,7 +867,7 @@ export default function AdminVerifications() {
                                     borderRadius: 'var(--radius-lg)',
                                     overflow: 'hidden',
                                     height: '100%',
-                                    zIndex: 0 // Ensure map stays below modals/headers if necessary
+                                    zIndex: 0
                                 }}>
                                     <MapContainer
                                         center={[20.5937, 78.9629]} // Default center (India)
@@ -868,30 +880,34 @@ export default function AdminVerifications() {
                                         />
                                         {selectedDriver?.currentLocation?.coordinates && (
                                             <RecenterMap
-                                                lat={selectedDriver.currentLocation.coordinates[1]} // Latitude
-                                                lng={selectedDriver.currentLocation.coordinates[0]} // Longitude
+                                                lat={selectedDriver.currentLocation.coordinates[1]}
+                                                lng={selectedDriver.currentLocation.coordinates[0]}
                                             />
                                         )}
-                                        {onlineDrivers.map(driver => (
-                                            driver.currentLocation?.coordinates && (
+                                        {onlineDrivers.map((driver, index) => {
+                                            const coords = driver.currentLocation?.coordinates;
+                                            const isValid = coords && (coords[0] !== 0 || coords[1] !== 0);
+                                            // Add small offset to prevent exact overlap
+                                            const offset = index * 0.0002;
+
+                                            return isValid && (
                                                 <Marker
                                                     key={driver._id}
-                                                    position={[
-                                                        driver.currentLocation.coordinates[1], // Latitude (Index 1 in GeoJSON)
-                                                        driver.currentLocation.coordinates[0]  // Longitude (Index 0 in GeoJSON)
-                                                    ]}
+                                                    position={[coords[1] + offset, coords[0] + offset]}
                                                 >
                                                     <Popup>
                                                         <div style={{ minWidth: '150px' }}>
                                                             <h4 style={{ fontWeight: 'bold', marginBottom: '5px' }}>{driver.userId.name}</h4>
                                                             <p style={{ margin: '2px 0' }}>Phone: {driver.userId.phone}</p>
                                                             <p style={{ margin: '2px 0' }}>Vehicle: {driver.vehicleNumber}</p>
-                                                            <p style={{ margin: '2px 0', color: '#10b981' }}>Status: {driver.currentStatus}</p>
+                                                            <p style={{ margin: '2px 0', color: '#10b981' }}>
+                                                                Status: {driver.currentStatus === 'offline' ? 'Idle' : driver.currentStatus}
+                                                            </p>
                                                         </div>
                                                     </Popup>
                                                 </Marker>
-                                            )
-                                        ))}
+                                            );
+                                        })}
                                     </MapContainer>
                                 </div>
                             </div>
@@ -1221,6 +1237,6 @@ export default function AdminVerifications() {
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 }

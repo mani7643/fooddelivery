@@ -1,47 +1,27 @@
-require('dotenv').config();
 const mongoose = require('mongoose');
-const { Schema } = mongoose;
 
-const DriverSchema = new Schema({
-    userId: { type: Schema.Types.ObjectId, ref: 'User' },
-    verificationStatus: String,
-    verificationNotes: String
-}, { strict: false });
+const mongoUri = 'mongodb+srv://student:student@cluster0.n186r.mongodb.net/courier';
 
-const UserSchema = new Schema({
-    email: String,
-    name: String
-}, { strict: false });
-
-async function run() {
-    const uri = process.env.MONGODB_URI;
-    if (!uri) {
-        console.error('Missing MONGODB_URI');
-        return;
-    }
-
+async function checkDrivers() {
     try {
-        console.log('Connecting to DB...');
-        await mongoose.connect(uri);
+        await mongoose.connect(mongoUri);
+        console.log('Connected to MongoDB');
 
-        const Driver = mongoose.model('Driver', DriverSchema);
-        const User = mongoose.model('User', UserSchema);
+        const drivers = await mongoose.connection.db.collection('drivers').find({ isAvailable: true }).toArray();
 
-        const drivers = await Driver.find().populate('userId', 'name email');
-
-        console.log('--- Drivers Status ---');
+        console.log(`Found ${drivers.length} online drivers:`);
         drivers.forEach(d => {
-            const email = d.userId ? d.userId.email : 'UNKNOWN';
-            console.log(`Driver: ${email}`);
-            console.log(`Status: ${d.verificationStatus}`);
-            console.log(`Notes:  ${d.verificationNotes || 'N/A'}`);
-            console.log('-------------------------');
+            console.log(`- Name: ${d.name}`);
+            console.log(`  Status: ${d.currentStatus}`);
+            console.log(`  Coords: ${JSON.stringify(d.currentLocation?.coordinates)}`);
+            console.log('---');
         });
 
+    } catch (err) {
+        console.error(err);
+    } finally {
         await mongoose.disconnect();
-    } catch (e) {
-        console.error(e);
     }
 }
 
-run();
+checkDrivers();
